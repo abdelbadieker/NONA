@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Category,
+  DeliveryFee,
   Product,
   ProductImage,
   ProductWithRelations,
@@ -130,4 +131,14 @@ export async function searchProducts(
     .or(`name_ar.ilike.${term},name_fr.ilike.${term},name_en.ilike.${term}`)
     .limit(40);
   return ((data as ProductCardData[] | null) ?? []).map(sortImages);
+}
+
+export async function getDeliveryFees(): Promise<DeliveryFee[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("delivery_fees")
+    .select("*")
+    .eq("is_active", true)
+    .order("wilaya_code", { ascending: true });
+  return (data as DeliveryFee[] | null) ?? [];
 }
