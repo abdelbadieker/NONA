@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* ── NONA design tokens ─────────────────────────────────
+   Identity: simple, feminine, modern. White / blush pink / gold / ink.
+   (Not luxury — clean and warm.) */
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #1a1a1a;
+
+  /* Brand */
+  --color-blush: #f5d0d5;
+  --color-blush-light: #fbeaec;
+  --color-blush-dark: #e8a9b2;
+  --color-gold: #d4af37;
+  --color-gold-dark: #b8962e;
+  --color-ink: #1a1a1a;
+  --color-cream: #fff9fa;
+  --color-muted: #8a8a8a;
+  --color-line: #efe6e7;
+
+  /* Fonts — --font-app is switched per language below */
+  --font-sans: var(--font-app);
+  --font-arabic: var(--font-cairo);
+  --font-latin: var(--font-inter);
+
+  --radius: 0.875rem;
+}
+
+/* Language-aware font: Cairo for Arabic, Inter for fr/en. */
+:root {
+  --font-app: var(--font-inter);
+}
+html[lang="ar"] {
+  --font-app: var(--font-cairo);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-app), system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: var(--color-blush);
+  color: var(--color-ink);
+}
+
+/* Hide scrollbars on horizontal sliders (carousels, chips) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
