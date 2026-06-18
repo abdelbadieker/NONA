@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node --env-file=.env.local scripts/db/run-sql.mjs supabase/migrations/0001_init.sql",
+    "db:seed": "node --env-file=.env.local scripts/db/run-sql.mjs supabase/seed.sql",
+    "db:query": "node --env-file=.env.local scripts/db/query.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -28,6 +31,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "pg": "^8.21.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
