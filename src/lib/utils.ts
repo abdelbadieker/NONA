@@ -6,10 +6,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format a number as Algerian Dinar (DZD). */
-export function formatPrice(amount: number, locale = "ar-DZ"): string {
-  return new Intl.NumberFormat(locale, {
-    style: "decimal",
+/** Format a price for Algeria (Latin digits, space grouping, no decimals). */
+export function formatPrice(amount: number): string {
+  return new Intl.NumberFormat("fr-DZ", {
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -21,5 +20,19 @@ export function interpolate(
 ): string {
   return template.replace(/\{(\w+)\}/g, (_, key) =>
     key in vars ? String(vars[key]) : `{${key}}`,
+  );
+}
+
+/** Pick a localized DB column (e.g. name_fr) with Arabic fallback. */
+export function pickLocale(
+  rec: Record<string, unknown> | null | undefined,
+  base: string,
+  locale: string,
+): string {
+  if (!rec) return "";
+  return (
+    (rec[`${base}_${locale}`] as string) ||
+    (rec[`${base}_ar`] as string) ||
+    ""
   );
 }

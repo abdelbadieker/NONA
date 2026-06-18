@@ -1,56 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-
-function SkeletonCard() {
-  return (
-    <div className="shrink-0 basis-40 sm:basis-48">
-      <div className="aspect-[3/4] w-full animate-pulse rounded-xl bg-blush-light" />
-      <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-blush-light" />
-      <div className="mt-1.5 h-3 w-1/3 animate-pulse rounded bg-blush-light" />
-    </div>
-  );
-}
-
-function Section({
-  title,
-  note,
-  cta,
-  href,
-  arrow,
-}: {
-  title: string;
-  note: string;
-  cta: string;
-  href: string;
-  arrow: typeof ArrowRight;
-}) {
-  const Arrow = arrow;
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-ink sm:text-2xl">{title}</h2>
-          <p className="mt-1 text-sm text-muted">{note}</p>
-        </div>
-        <Link
-          href={href}
-          className="flex items-center gap-1 text-sm font-medium text-blush-dark hover:underline"
-        >
-          {cta}
-          <Arrow className="size-4" aria-hidden />
-        </Link>
-      </div>
-      <div className="no-scrollbar mt-4 flex gap-4 overflow-x-auto pb-2">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </div>
-    </section>
-  );
-}
+import {
+  getBestSellers,
+  getCategories,
+  getFeatured,
+  getNewArrivals,
+} from "@/lib/data/catalog";
+import { ProductRail } from "@/components/product/ProductRail";
+import { CategoryGrid } from "@/components/home/CategoryGrid";
+import { Reviews } from "@/components/home/Reviews";
+import { Faq } from "@/components/home/Faq";
+import { faq, reviews } from "@/lib/content";
 
 export default async function HomePage({
   params,
@@ -62,13 +24,19 @@ export default async function HomePage({
 
   const dict = await getDictionary(lang);
   const base = `/${lang}`;
-  const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
+
+  const [categories, featured, bestSellers, newArrivals] = await Promise.all([
+    getCategories(),
+    getFeatured(10),
+    getBestSellers(10),
+    getNewArrivals(10),
+  ]);
 
   return (
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-blush-light to-cream">
-        <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-20">
           <span className="inline-block rounded-full bg-white px-4 py-1 text-sm font-medium text-blush-dark shadow-sm">
             {dict.home.heroBadge}
           </span>
@@ -92,8 +60,6 @@ export default async function HomePage({
               {dict.home.heroSecondary}
             </Link>
           </div>
-
-          {/* Trust strip */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-ink/70">
             <span>✓ {dict.home.trustCod}</span>
             <span>✓ {dict.home.trustDelivery}</span>
@@ -102,28 +68,40 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* Product sections (filled with live data in Phase 4) */}
-      <Section
+      {/* Categories */}
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <h2 className="text-xl font-bold text-ink sm:text-2xl">
+          {dict.home.categories}
+        </h2>
+        <div className="mt-4">
+          <CategoryGrid categories={categories} lang={lang} />
+        </div>
+      </section>
+
+      <ProductRail
         title={dict.home.featured}
-        note={dict.home.comingSoon}
-        cta={dict.home.viewAll}
+        products={featured}
+        lang={lang}
+        dict={dict}
         href={`${base}/shop`}
-        arrow={Arrow}
       />
-      <Section
+      <ProductRail
         title={dict.home.bestSellers}
-        note={dict.home.comingSoon}
-        cta={dict.home.viewAll}
-        href={`${base}/shop`}
-        arrow={Arrow}
+        products={bestSellers}
+        lang={lang}
+        dict={dict}
+        href={`${base}/shop?sort=bestselling`}
       />
-      <Section
+      <ProductRail
         title={dict.home.newArrivals}
-        note={dict.home.comingSoon}
-        cta={dict.home.viewAll}
+        products={newArrivals}
+        lang={lang}
+        dict={dict}
         href={`${base}/shop`}
-        arrow={Arrow}
       />
+
+      <Reviews title={dict.home.reviews} items={reviews[lang]} />
+      <Faq title={dict.home.faq} items={faq[lang]} />
     </>
   );
 }

@@ -52,6 +52,19 @@ export const ar = {
     description: "الوصف",
     delivery: "التوصيل",
     bestSeller: "الأكثر طلبًا",
+    chooseSize: "اختاري المقاس",
+    chooseColor: "اختاري اللون",
+    backToShop: "العودة إلى المتجر",
+  },
+  shop: {
+    all: "الكل",
+    sortBy: "ترتيب",
+    sortNewest: "الأحدث",
+    sortPriceAsc: "السعر: تصاعدي",
+    sortPriceDesc: "السعر: تنازلي",
+    sortBestselling: "الأكثر مبيعًا",
+    results: "منتج",
+    empty: "لا توجد منتجات حاليًا",
   },
   footer: {
     tagline: "متجر نسائي عصري — أناقة بأسعار في المتناول.",
@@ -116,6 +129,19 @@ export type Dictionary = {
     description: string;
     delivery: string;
     bestSeller: string;
+    chooseSize: string;
+    chooseColor: string;
+    backToShop: string;
+  };
+  shop: {
+    all: string;
+    sortBy: string;
+    sortNewest: string;
+    sortPriceAsc: string;
+    sortPriceDesc: string;
+    sortBestselling: string;
+    results: string;
+    empty: string;
   };
   footer: {
     tagline: string;

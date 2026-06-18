@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { PlaceholderScreen } from "@/components/PlaceholderScreen";
+import { WishlistView } from "@/components/wishlist/WishlistView";
 
 export default async function WishlistPage({
   params,
@@ -11,7 +11,13 @@ export default async function WishlistPage({
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const dict = await getDictionary(lang);
+
   return (
-    <PlaceholderScreen title={dict.nav.wishlist} note={dict.home.comingSoon} />
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <h1 className="text-2xl font-bold text-ink">{dict.nav.wishlist}</h1>
+      <div className="mt-6">
+        <WishlistView lang={lang} dict={dict} />
+      </div>
+    </div>
   );
 }
