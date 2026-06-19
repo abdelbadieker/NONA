@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { locales, defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { updateSession } from "@/lib/supabase/session";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
 /**
  * Pick a locale: a saved choice (cookie) wins, otherwise default to Arabic.
- * Per spec the store is Arabic-first; visitors switch via the language button
- * and the choice is persisted. (To auto-detect the browser language instead,
- * read `accept-language` here before falling back to defaultLocale.)
+ * (To auto-detect the browser language, read `accept-language` before the
+ * default.)
  */
 function detectLocale(request: NextRequest): Locale {
   const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
@@ -17,28 +17,30 @@ function detectLocale(request: NextRequest): Locale {
   return defaultLocale;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
-  if (hasLocale) return NextResponse.next();
 
-  // No locale prefix → redirect to the detected locale.
-  const locale = detectLocale(request);
-  request.nextUrl.pathname = `/${locale}${pathname}`;
-  const response = NextResponse.redirect(request.nextUrl);
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: ONE_YEAR,
-    sameSite: "lax",
-  });
-  return response;
+  if (!hasLocale) {
+    const locale = detectLocale(request);
+    request.nextUrl.pathname = `/${locale}${pathname}`;
+    const response = NextResponse.redirect(request.nextUrl);
+    response.cookies.set(LOCALE_COOKIE, locale, {
+      path: "/",
+      maxAge: ONE_YEAR,
+      sameSite: "lax",
+    });
+    return response;
+  }
+
+  // Localized request: keep the auth session fresh (no-op for guests).
+  return updateSession(request);
 }
 
 export const config = {
-  // Run on everything except API routes, Next internals, and files with an extension.
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)",
   ],
