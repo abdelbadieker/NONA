@@ -18,7 +18,7 @@ type Result =
       productId: string;
       value: number;
     }
-  | { ok: false; error: "validation" | "stock" | "generic" };
+  | { ok: false; error: "validation" | "stock" | "generic" | "rate" };
 
 /**
  * Creates a guest order (status: not_confirmed). Stock is NOT decremented here
@@ -31,6 +31,14 @@ export async function createOrder(input: OrderInput): Promise<Result> {
   const d = parsed.data;
 
   const supabase = createAdminClient();
+
+  // Anti double-submit / spam: one order per phone per 10s.
+  const { count: recent } = await supabase
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+    .eq("customer_phone", d.customerPhone)
+    .gte("created_at", new Date(Date.now() - 10_000).toISOString());
+  if ((recent ?? 0) > 0) return { ok: false, error: "rate" };
 
   const { data: product } = await supabase
     .from("products")

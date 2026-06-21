@@ -47,8 +47,33 @@ export default async function ProductPage({
   const images = product.images.map((i) => ({ url: i.url }));
   const Back = (lang as Locale) === "ar" ? ArrowRight : ArrowLeft;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    description: description || name,
+    image: product.images.map((i) => i.url),
+    sku: product.id,
+    brand: { "@type": "Brand", name: "NONA" },
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "DZD",
+      availability:
+        product.total_stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: `${siteUrl}/${lang}/product/${product.slug}`,
+    },
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ViewContentTracker id={product.id} value={product.price} />
       <nav className="mb-4">
         <Link

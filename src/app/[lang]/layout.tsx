@@ -18,9 +18,25 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
+  const ogLocale = lang === "ar" ? "ar_DZ" : lang === "fr" ? "fr_DZ" : "en_US";
   return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    ),
     title: { default: dict.meta.title, template: "%s | NONA" },
     description: dict.meta.description,
+    openGraph: {
+      type: "website",
+      siteName: "NONA",
+      locale: ogLocale,
+      title: dict.meta.title,
+      description: dict.meta.description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.meta.title,
+      description: dict.meta.description,
+    },
   };
 }
 
