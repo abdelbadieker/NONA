@@ -1,7 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { getAdmin } from "@/lib/auth";
 import { orderInputSchema, type OrderInput } from "@/lib/validation";
+import type { OrderStatus } from "@/lib/types";
 
 type Result =
   | { ok: true; orderNumber: number }
@@ -105,4 +109,53 @@ export async function createOrder(input: OrderInput): Promise<Result> {
   });
 
   return { ok: true, orderNumber: Number(order.order_number) };
+}
+
+const TS_COL: Partial<Record<OrderStatus, string>> = {
+  confirmed: "confirmed_at",
+  delivered: "delivered_at",
+  canceled: "canceled_at",
+  returned: "returned_at",
+};
+
+/**
+ * Admin-only order status change. The DB trigger adjusts stock automatically
+ * (confirm decrements, cancel/return restock) and blocks overselling.
+ */
+export async function updateOrderStatus(input: {
+  orderId: string;
+  status: OrderStatus;
+  reasonId?: string | null;
+  lang: string;
+}): Promise<{ ok: true } | { ok: false; error: "auth" | "stock" | "generic" }> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "auth" };
+
+  const supabase = await createClient();
+  const patch: Record<string, unknown> = { status: input.status };
+  const tsCol = TS_COL[input.status];
+  if (tsCol) patch[tsCol] = new Date().toISOString();
+  if (input.status === "canceled") {
+    patch.cancellation_reason_id = input.reasonId ?? null;
+  }
+  if (input.status === "returned") {
+    patch.return_reason_id = input.reasonId ?? null;
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update(patch)
+    .eq("id", input.orderId);
+
+  if (error) {
+    return {
+      ok: false,
+      error: /insufficient stock/i.test(error.message) ? "stock" : "generic",
+    };
+  }
+
+  revalidatePath(`/${input.lang}/admin/orders/${input.orderId}`);
+  revalidatePath(`/${input.lang}/admin/orders`);
+  revalidatePath(`/${input.lang}/admin`);
+  return { ok: true };
 }

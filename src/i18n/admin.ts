@@ -58,6 +58,9 @@ export type AdminText = {
     empty: string;
     back: string;
     commune: string;
+    errStock: string;
+    errGeneric: string;
+    updated: string;
   };
   products: {
     title: string;
@@ -214,6 +217,9 @@ export const adminText: Record<Locale, AdminText> = {
       empty: "لا توجد طلبات",
       back: "العودة للطلبات",
       commune: "البلدية",
+      errStock: "لا يمكن التأكيد: الكمية غير متوفرة في المخزون",
+      errGeneric: "تعذّر تحديث الحالة",
+      updated: "تم تحديث الحالة",
     },
     products: {
       title: "المنتجات",
@@ -341,6 +347,9 @@ export const adminText: Record<Locale, AdminText> = {
       empty: "Aucune commande",
       back: "Retour aux commandes",
       commune: "Commune",
+      errStock: "Confirmation impossible : stock insuffisant",
+      errGeneric: "Échec de la mise à jour du statut",
+      updated: "Statut mis à jour",
     },
     products: {
       title: "Produits",
@@ -468,6 +477,9 @@ export const adminText: Record<Locale, AdminText> = {
       empty: "No orders",
       back: "Back to orders",
       commune: "Commune",
+      errStock: "Can't confirm: insufficient stock",
+      errGeneric: "Could not update status",
+      updated: "Status updated",
     },
     products: {
       title: "Products",
