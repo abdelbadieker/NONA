@@ -1,6 +1,13 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Order, OrderItem, OrderStatus } from "@/lib/types";
+import type {
+  Order,
+  OrderItem,
+  OrderStatus,
+  Product,
+  ProductImage,
+  ProductVariant,
+} from "@/lib/types";
 
 export type DashboardStats = {
   totalOrders: number;
@@ -123,6 +130,68 @@ export async function getOrderById(
   return { order: order as Order, items: (items as OrderItem[] | null) ?? [] };
 }
 
+export type AdminProductRow = Pick<
+  Product,
+  | "id"
+  | "slug"
+  | "name_ar"
+  | "name_fr"
+  | "name_en"
+  | "price"
+  | "total_stock"
+  | "is_active"
+  | "is_featured"
+  | "is_best_seller"
+> & { image: string | null };
+
+export async function getAdminProducts(): Promise<AdminProductRow[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select(
+      "id, slug, name_ar, name_fr, name_en, price, total_stock, is_active, is_featured, is_best_seller, images:product_images(url, position)",
+    )
+    .order("created_at", { ascending: false });
+
+  return ((data as (AdminProductRow & { images: { url: string; position: number }[] })[] | null) ?? []).map(
+    (p) => {
+      const image =
+        [...(p.images ?? [])].sort((a, b) => a.position - b.position)[0]?.url ??
+        null;
+      return { ...p, image };
+    },
+  );
+}
+
+export async function getProductForEdit(id: string): Promise<
+  | (Product & { images: ProductImage[]; variants: ProductVariant[] })
+  | null
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("*, images:product_images(*), variants:product_variants(*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (!data) return null;
+  const p = data as Product & {
+    images: ProductImage[];
+    variants: ProductVariant[];
+  };
+  p.images = [...(p.images ?? [])].sort((a, b) => a.position - b.position);
+  p.variants = [...(p.variants ?? [])].sort((a, b) => a.position - b.position);
+  return p;
+}
+
+type ReasonRow = {
+  id: string;
+  label_ar: string;
+  label_fr: string | null;
+  label_en: string | null;
+  position: number;
+  is_active: boolean;
+};
+
 export async function getActiveReasons(kind: "cancellation" | "return") {
   const supabase = await createClient();
   const table =
@@ -132,5 +201,54 @@ export async function getActiveReasons(kind: "cancellation" | "return") {
     .select("*")
     .eq("is_active", true)
     .order("position", { ascending: true });
-  return (data as { id: string; label_ar: string; label_fr: string | null; label_en: string | null }[] | null) ?? [];
+  return (data as ReasonRow[] | null) ?? [];
+}
+
+export async function getAllReasons(
+  kind: "cancellation" | "return",
+): Promise<ReasonRow[]> {
+  const supabase = await createClient();
+  const table =
+    kind === "cancellation" ? "cancellation_reasons" : "return_reasons";
+  const { data } = await supabase
+    .from(table)
+    .select("*")
+    .order("position", { ascending: true });
+  return (data as ReasonRow[] | null) ?? [];
+}
+
+export async function getStoreSettings() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("settings")
+    .select("key, value")
+    .in("key", ["store", "social"]);
+  const map = Object.fromEntries(
+    ((data as { key: string; value: Record<string, unknown> }[] | null) ?? []).map(
+      (r) => [r.key, r.value],
+    ),
+  );
+  return {
+    store: (map.store ?? {}) as Record<string, string>,
+    social: (map.social ?? {}) as Record<string, string>,
+  };
+}
+
+export async function getAllDeliveryFees() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("delivery_fees")
+    .select("*")
+    .order("wilaya_code", { ascending: true });
+  return (
+    (data as {
+      id: string;
+      wilaya_code: number;
+      name_ar: string;
+      name_fr: string | null;
+      home_fee: number;
+      stopdesk_fee: number;
+      is_active: boolean;
+    }[] | null) ?? []
+  );
 }
