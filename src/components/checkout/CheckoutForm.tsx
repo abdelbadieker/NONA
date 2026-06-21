@@ -9,6 +9,7 @@ import type { CheckoutText } from "@/i18n/checkout";
 import type { DeliveryFee } from "@/lib/types";
 import { createOrder } from "@/lib/actions/orders";
 import { PHONE_RE } from "@/lib/validation";
+import { trackInitiateCheckout } from "@/lib/pixel";
 import { cn, formatPrice } from "@/lib/utils";
 
 const SAVE_KEY = "nona_checkout";
@@ -17,7 +18,7 @@ type Props = {
   lang: Locale;
   t: CheckoutText;
   currency: string;
-  product: { slug: string; name: string; image: string | null };
+  product: { id: string; slug: string; name: string; image: string | null };
   variant: {
     id: string;
     size: string | null;
@@ -69,6 +70,17 @@ export function CheckoutForm({
       if (s.deliveryType) setDeliveryType(s.deliveryType);
       if (s.notes) setNotes(s.notes);
     } catch {}
+  }, []);
+
+  // Fire InitiateCheckout once on mount.
+  useEffect(() => {
+    trackInitiateCheckout({
+      ids: [product.id],
+      value: variant.unitPrice * initialQty,
+      currency: "DZD",
+      numItems: initialQty,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Autosave (debounced)
@@ -144,6 +156,18 @@ export function CheckoutForm({
       });
       if (res.ok) {
         localStorage.removeItem(SAVE_KEY);
+        try {
+          sessionStorage.setItem(
+            "nona_purchase",
+            JSON.stringify({
+              ids: [res.productId],
+              value: res.value,
+              currency: "DZD",
+              numItems: clampedQty,
+              eventId: res.eventId,
+            }),
+          );
+        } catch {}
         router.push(`/${lang}/checkout/success?order=${res.orderNumber}`);
       } else {
         setServerError(res.error === "stock" ? t.errStock : t.errGeneric);

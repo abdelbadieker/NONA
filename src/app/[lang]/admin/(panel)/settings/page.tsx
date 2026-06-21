@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { adminText } from "@/i18n/admin";
 import { getAllDeliveryFees, getStoreSettings } from "@/lib/data/admin";
+import { getMarketingServer } from "@/lib/data/marketing";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { DeliveryFeesEditor } from "@/components/admin/DeliveryFeesEditor";
+import { MarketingForm } from "@/components/admin/MarketingForm";
 
 export default async function AdminSettingsPage({
   params,
@@ -14,9 +16,10 @@ export default async function AdminSettingsPage({
   if (!isLocale(lang)) notFound();
 
   const t = adminText[lang];
-  const [settings, fees] = await Promise.all([
+  const [settings, fees, marketing] = await Promise.all([
     getStoreSettings(),
     getAllDeliveryFees(),
+    getMarketingServer(),
   ]);
 
   return (
@@ -28,6 +31,12 @@ export default async function AdminSettingsPage({
         common={t.common}
         initialStore={settings.store}
         initialSocial={settings.social}
+      />
+      <MarketingForm
+        lang={lang}
+        t={t.settings}
+        common={t.common}
+        initial={marketing}
       />
       <DeliveryFeesEditor
         lang={lang}

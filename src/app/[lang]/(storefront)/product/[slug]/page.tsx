@@ -7,6 +7,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getProductBySlug } from "@/lib/data/catalog";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchase } from "@/components/product/ProductPurchase";
+import { ViewContentTracker } from "@/components/marketing/Trackers";
 import { pickLocale } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -48,6 +49,7 @@ export default async function ProductPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <ViewContentTracker id={product.id} value={product.price} />
       <nav className="mb-4">
         <Link
           href={`/${lang}/shop`}

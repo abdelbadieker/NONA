@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { isLocale } from "@/i18n/config";
 import { checkoutText } from "@/i18n/checkout";
+import { PurchaseTracker } from "@/components/marketing/Trackers";
 
 export default async function SuccessPage({
   params,
@@ -19,6 +20,7 @@ export default async function SuccessPage({
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-4 px-6 py-20 text-center">
+      <PurchaseTracker />
       <CheckCircle2 className="size-16 text-green-500" aria-hidden />
       <h1 className="text-2xl font-bold text-ink">{t.successTitle}</h1>
       <p className="text-muted">{t.successText}</p>

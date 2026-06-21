@@ -2,6 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { useWishlist } from "@/lib/wishlist";
+import { trackAddToWishlist } from "@/lib/pixel";
 import { cn } from "@/lib/utils";
 
 export function WishlistButton({
@@ -22,6 +23,7 @@ export function WishlistButton({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!active) trackAddToWishlist(productId);
         toggle(productId);
       }}
       aria-pressed={active}

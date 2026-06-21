@@ -1,9 +1,14 @@
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { getMarketingPublic } from "@/lib/data/marketing";
+import { getStoreSettings } from "@/lib/data/admin";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { MetaPixel } from "@/components/marketing/MetaPixel";
+import { TikTokPixel } from "@/components/marketing/TikTokPixel";
+import { WhatsAppButton } from "@/components/marketing/WhatsAppButton";
 
 export default async function StorefrontLayout({
   children,
@@ -14,7 +19,12 @@ export default async function StorefrontLayout({
 }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const dict = await getDictionary(lang);
+
+  const [dict, marketing, settings] = await Promise.all([
+    getDictionary(lang),
+    getMarketingPublic(),
+    getStoreSettings(),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
@@ -24,6 +34,11 @@ export default async function StorefrontLayout({
       </main>
       <Footer lang={lang} dict={dict} />
       <BottomNav lang={lang} dict={dict} />
+      <WhatsAppButton phone={settings.social.whatsapp ?? ""} />
+      {marketing.metaPixelId && <MetaPixel pixelId={marketing.metaPixelId} />}
+      {marketing.tiktokPixelId && (
+        <TikTokPixel pixelId={marketing.tiktokPixelId} />
+      )}
     </div>
   );
 }

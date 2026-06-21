@@ -56,6 +56,36 @@ export async function saveStoreSettings(
   return { ok: true };
 }
 
+export async function saveMarketing(
+  input: { metaPixelId: string; metaCapiToken: string; tiktokPixelId: string },
+  lang: string,
+): Promise<{ ok: boolean }> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false };
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  await supabase.from("settings").upsert([
+    {
+      key: "marketing",
+      value: {
+        meta_pixel_id: input.metaPixelId.trim(),
+        tiktok_pixel_id: input.tiktokPixelId.trim(),
+      },
+      is_public: true,
+      updated_at: now,
+    },
+    {
+      key: "marketing_secret",
+      value: { meta_capi_token: input.metaCapiToken.trim() },
+      is_public: false,
+      updated_at: now,
+    },
+  ]);
+  revalidatePath(`/${lang}`, "layout");
+  revalidatePath(`/${lang}/admin/settings`);
+  return { ok: true };
+}
+
 export async function saveDeliveryFees(
   fees: { id: string; home_fee: number; stopdesk_fee: number }[],
   lang: string,

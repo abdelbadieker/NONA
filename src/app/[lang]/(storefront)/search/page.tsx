@@ -4,6 +4,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { searchProducts } from "@/lib/data/catalog";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { SearchBar } from "@/components/shop/SearchBar";
+import { SearchTracker } from "@/components/marketing/Trackers";
 
 export default async function SearchPage({
   params,
@@ -22,6 +23,7 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <SearchTracker query={query} />
       <h1 className="text-2xl font-bold text-ink">{dict.nav.search}</h1>
 
       <div className="mt-4">

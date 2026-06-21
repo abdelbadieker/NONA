@@ -1,14 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getAdmin } from "@/lib/auth";
+import { getMarketingServer } from "@/lib/data/marketing";
+import { sendMetaPurchase } from "@/lib/meta-capi";
 import { orderInputSchema, type OrderInput } from "@/lib/validation";
 import type { OrderStatus } from "@/lib/types";
 
 type Result =
-  | { ok: true; orderNumber: number }
+  | {
+      ok: true;
+      orderNumber: number;
+      eventId: string;
+      productId: string;
+      value: number;
+    }
   | { ok: false; error: "validation" | "stock" | "generic" };
 
 /**
@@ -108,7 +117,43 @@ export async function createOrder(input: OrderInput): Promise<Result> {
     metadata: { total, wilaya: d.wilayaCode, delivery_type: d.deliveryType },
   });
 
-  return { ok: true, orderNumber: Number(order.order_number) };
+  // Meta Conversions API — server Purchase, deduped with the browser pixel.
+  const eventId = globalThis.crypto?.randomUUID?.() ?? order.id;
+  try {
+    const mkt = await getMarketingServer();
+    if (mkt.metaPixelId && mkt.metaCapiToken) {
+      const hdrs = await headers();
+      const cookieStore = await cookies();
+      await sendMetaPurchase({
+        pixelId: mkt.metaPixelId,
+        token: mkt.metaCapiToken,
+        eventId,
+        value: total,
+        currency: "DZD",
+        contentIds: [product.id],
+        numItems: d.qty,
+        phone: d.customerPhone,
+        clientIp:
+          (hdrs.get("x-forwarded-for")?.split(",")[0] ??
+            hdrs.get("x-real-ip") ??
+            "").trim() || undefined,
+        userAgent: hdrs.get("user-agent") ?? undefined,
+        fbp: cookieStore.get("_fbp")?.value,
+        fbc: cookieStore.get("_fbc")?.value,
+        eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${d.locale}/checkout`,
+      });
+    }
+  } catch {
+    // never block checkout on tracking
+  }
+
+  return {
+    ok: true,
+    orderNumber: Number(order.order_number),
+    eventId,
+    productId: product.id,
+    value: total,
+  };
 }
 
 const TS_COL: Partial<Record<OrderStatus, string>> = {

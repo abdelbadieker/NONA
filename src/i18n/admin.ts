@@ -114,6 +114,11 @@ export type AdminText = {
     deliveryFees: string;
     homeFee: string;
     stopdeskFee: string;
+    marketing: string;
+    metaPixel: string;
+    capiToken: string;
+    tiktokPixel: string;
+    marketingHint: string;
     saved: string;
   };
   common: {
@@ -273,6 +278,11 @@ export const adminText: Record<Locale, AdminText> = {
       deliveryFees: "رسوم التوصيل",
       homeFee: "إلى المنزل",
       stopdeskFee: "إلى المكتب",
+      marketing: "التسويق والبكسل",
+      metaPixel: "معرّف Meta Pixel",
+      capiToken: "رمز Conversions API (سري)",
+      tiktokPixel: "معرّف TikTok Pixel",
+      marketingHint: "انسخي المعرّفات من Meta Business Manager / TikTok Ads لتتبّع التحويلات.",
       saved: "تم الحفظ",
     },
     common: {
@@ -403,6 +413,11 @@ export const adminText: Record<Locale, AdminText> = {
       deliveryFees: "Frais de livraison",
       homeFee: "À domicile",
       stopdeskFee: "Au bureau",
+      marketing: "Marketing & Pixels",
+      metaPixel: "ID Meta Pixel",
+      capiToken: "Jeton Conversions API (secret)",
+      tiktokPixel: "ID TikTok Pixel",
+      marketingHint: "Copiez les ID depuis Meta Business Manager / TikTok Ads pour suivre les conversions.",
       saved: "Enregistré",
     },
     common: {
@@ -533,6 +548,11 @@ export const adminText: Record<Locale, AdminText> = {
       deliveryFees: "Delivery fees",
       homeFee: "Home",
       stopdeskFee: "Stop desk",
+      marketing: "Marketing & Pixels",
+      metaPixel: "Meta Pixel ID",
+      capiToken: "Conversions API token (secret)",
+      tiktokPixel: "TikTok Pixel ID",
+      marketingHint: "Copy the IDs from Meta Business Manager / TikTok Ads to track conversions.",
       saved: "Saved",
     },
     common: {

@@ -56,7 +56,7 @@ export default async function CheckoutPage({
           lang={lang}
           t={t}
           currency={dict.common.currency}
-          product={{ slug: product.slug, name, image }}
+          product={{ id: product.id, slug: product.slug, name, image }}
           variant={{
             id: variant.id,
             size: variant.size,
