@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdmin } from "@/lib/auth";
+import { revalidateStore } from "@/lib/actions/revalidate";
 import { productInputSchema, type ProductInput } from "@/lib/validation";
 
 type SaveResult =
@@ -99,6 +100,7 @@ export async function saveProduct(
   }
 
   updateTag("catalog");
+  revalidateStore(d.slug);
   revalidatePath(`/${lang}/admin/products`);
   revalidatePath(`/${lang}/admin`);
   return { ok: true, id: productId };
@@ -113,6 +115,7 @@ export async function deleteProduct(
   const supabase = createAdminClient();
   await supabase.from("products").delete().eq("id", id);
   updateTag("catalog");
+  revalidateStore();
   revalidatePath(`/${lang}/admin/products`);
   return { ok: true };
 }
@@ -127,6 +130,7 @@ export async function toggleProductActive(
   const supabase = createAdminClient();
   await supabase.from("products").update({ is_active: isActive }).eq("id", id);
   updateTag("catalog");
+  revalidateStore();
   revalidatePath(`/${lang}/admin/products`);
   return { ok: true };
 }

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { cairo, inter } from "@/lib/fonts";
 import { locales, isLocale, getDirection } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { getTheme } from "@/lib/data/appearance";
 import { siteUrl } from "@/lib/site";
 import "../globals.css";
 
@@ -50,6 +51,8 @@ export default async function LangLayout({
   if (!isLocale(lang)) notFound();
 
   const dir = getDirection(lang);
+  const theme = await getTheme();
+  const themeCss = `:root{--color-blush:${theme.blush};--color-blush-dark:${theme.blushDark};--color-gold:${theme.gold};--color-ink:${theme.ink};--color-foreground:${theme.ink};--color-background:${theme.background};}`;
 
   return (
     <html
@@ -59,6 +62,7 @@ export default async function LangLayout({
       className={`${cairo.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
+        <style dangerouslySetInnerHTML={{ __html: themeCss }} />
         {children}
         <Analytics />
       </body>

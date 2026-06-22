@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   Package,
+  Palette,
   Settings,
   ShoppingBag,
   Store,
@@ -39,6 +40,7 @@ export function AdminShell({
     { href: `${base}/orders`, label: nav.orders, icon: ShoppingBag },
     { href: `${base}/products`, label: nav.products, icon: Package },
     { href: `${base}/reasons`, label: nav.reasons, icon: ListX },
+    { href: `${base}/appearance`, label: nav.appearance, icon: Palette },
     { href: `${base}/settings`, label: nav.settings, icon: Settings },
   ];
   const isActive = (href: string, exact?: boolean) =>

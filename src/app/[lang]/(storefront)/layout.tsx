@@ -3,6 +3,7 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getMarketingPublic } from "@/lib/data/marketing";
 import { getStoreSettings } from "@/lib/data/admin";
+import { getHomeContent } from "@/lib/data/appearance";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -20,14 +21,21 @@ export default async function StorefrontLayout({
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const [dict, marketing, settings] = await Promise.all([
+  const [dict, marketing, settings, home] = await Promise.all([
     getDictionary(lang),
     getMarketingPublic(),
     getStoreSettings(),
+    getHomeContent(),
   ]);
+  const announcement = home[lang]?.announcement;
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
+      {announcement && (
+        <div className="bg-ink px-4 py-2 text-center text-sm font-medium text-white">
+          {announcement}
+        </div>
+      )}
       <Header lang={lang} dict={dict} />
       <main id="main" className="flex-1">
         {children}

@@ -23,6 +23,17 @@ export function interpolate(
   );
 }
 
+/** Darken a #rrggbb hex color by a fraction (0–1). */
+export function darkenHex(hex: string, amount = 0.14): string {
+  const m = hex.trim().replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(m)) return hex;
+  const num = parseInt(m, 16);
+  const r = Math.max(0, Math.round(((num >> 16) & 255) * (1 - amount)));
+  const g = Math.max(0, Math.round(((num >> 8) & 255) * (1 - amount)));
+  const b = Math.max(0, Math.round((num & 255) * (1 - amount)));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
 /** Pick a localized DB column (e.g. name_fr) with Arabic fallback. */
 export function pickLocale(
   rec: Record<string, unknown> | null | undefined,

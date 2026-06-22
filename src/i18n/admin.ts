@@ -20,8 +20,29 @@ export type AdminText = {
     products: string;
     reasons: string;
     settings: string;
+    appearance: string;
     logout: string;
     viewStore: string;
+  };
+  appearance: {
+    title: string;
+    colors: string;
+    blush: string;
+    gold: string;
+    ink: string;
+    background: string;
+    reset: string;
+    hero: string;
+    heroImage: string;
+    uploadImage: string;
+    remove: string;
+    badge: string;
+    heroTitle: string;
+    subtitle: string;
+    cta: string;
+    announcement: string;
+    perLang: string;
+    hint: string;
   };
   dashboard: {
     title: string;
@@ -184,8 +205,29 @@ export const adminText: Record<Locale, AdminText> = {
       products: "المنتجات",
       reasons: "الأسباب",
       settings: "الإعدادات",
+      appearance: "المظهر",
       logout: "تسجيل الخروج",
       viewStore: "عرض المتجر",
+    },
+    appearance: {
+      title: "المظهر والمحتوى",
+      colors: "ألوان المتجر",
+      blush: "الوردي",
+      gold: "الذهبي",
+      ink: "لون النص",
+      background: "الخلفية",
+      reset: "إعادة الافتراضي",
+      hero: "القسم الرئيسي",
+      heroImage: "صورة القسم الرئيسي",
+      uploadImage: "رفع صورة",
+      remove: "حذف",
+      badge: "الشارة",
+      heroTitle: "العنوان الرئيسي",
+      subtitle: "الوصف",
+      cta: "زر الشراء",
+      announcement: "شريط الإعلان",
+      perLang: "النصوص حسب اللغة",
+      hint: "اتركي الحقل فارغاً لاستخدام النص الافتراضي.",
     },
     dashboard: {
       title: "نظرة عامة",
@@ -319,8 +361,29 @@ export const adminText: Record<Locale, AdminText> = {
       products: "Produits",
       reasons: "Motifs",
       settings: "Paramètres",
+      appearance: "Apparence",
       logout: "Déconnexion",
       viewStore: "Voir la boutique",
+    },
+    appearance: {
+      title: "Apparence & contenu",
+      colors: "Couleurs de la boutique",
+      blush: "Rose",
+      gold: "Doré",
+      ink: "Texte",
+      background: "Fond",
+      reset: "Réinitialiser",
+      hero: "Section principale",
+      heroImage: "Image principale",
+      uploadImage: "Téléverser",
+      remove: "Supprimer",
+      badge: "Badge",
+      heroTitle: "Titre",
+      subtitle: "Sous-titre",
+      cta: "Bouton d'achat",
+      announcement: "Bandeau d'annonce",
+      perLang: "Textes par langue",
+      hint: "Laissez vide pour utiliser le texte par défaut.",
     },
     dashboard: {
       title: "Vue d'ensemble",
@@ -454,8 +517,29 @@ export const adminText: Record<Locale, AdminText> = {
       products: "Products",
       reasons: "Reasons",
       settings: "Settings",
+      appearance: "Appearance",
       logout: "Sign out",
       viewStore: "View store",
+    },
+    appearance: {
+      title: "Appearance & content",
+      colors: "Store colors",
+      blush: "Blush",
+      gold: "Gold",
+      ink: "Text",
+      background: "Background",
+      reset: "Reset to default",
+      hero: "Hero section",
+      heroImage: "Hero image",
+      uploadImage: "Upload",
+      remove: "Remove",
+      badge: "Badge",
+      heroTitle: "Title",
+      subtitle: "Subtitle",
+      cta: "Buy button",
+      announcement: "Announcement bar",
+      perLang: "Text per language",
+      hint: "Leave blank to use the default text.",
     },
     dashboard: {
       title: "Overview",

@@ -7,6 +7,7 @@ import {
   getFeatured,
   getNewArrivals,
 } from "@/lib/data/catalog";
+import { getHomeContent } from "@/lib/data/appearance";
 import { Hero } from "@/components/home/Hero";
 import { ProductRail } from "@/components/product/ProductRail";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
@@ -25,12 +26,14 @@ export default async function HomePage({
   const dict = await getDictionary(lang);
   const base = `/${lang}`;
 
-  const [categories, featured, bestSellers, newArrivals] = await Promise.all([
-    getCategories(),
-    getFeatured(10),
-    getBestSellers(10),
-    getNewArrivals(10),
-  ]);
+  const [categories, featured, bestSellers, newArrivals, home] =
+    await Promise.all([
+      getCategories(),
+      getFeatured(10),
+      getBestSellers(10),
+      getNewArrivals(10),
+      getHomeContent(),
+    ]);
 
   const heroProduct = [...featured, ...bestSellers, ...newArrivals].find(
     (p) => p.images?.length,
@@ -38,7 +41,13 @@ export default async function HomePage({
 
   return (
     <>
-      <Hero lang={lang} dict={dict} product={heroProduct} />
+      <Hero
+        lang={lang}
+        dict={dict}
+        product={heroProduct}
+        content={home[lang]}
+        heroImage={home.heroImage}
+      />
 
       <ProductRail
         title={dict.home.bestSellers}
