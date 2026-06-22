@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdmin } from "@/lib/auth";
 
@@ -51,6 +51,7 @@ export async function saveStoreSettings(
     { key: "store", value: store, is_public: true, updated_at: now },
     { key: "social", value: social, is_public: true, updated_at: now },
   ]);
+  updateTag("settings");
   revalidatePath(`/${lang}/admin/settings`);
   revalidatePath(`/${lang}`, "layout");
   return { ok: true };
@@ -81,6 +82,7 @@ export async function saveMarketing(
       updated_at: now,
     },
   ]);
+  updateTag("settings");
   revalidatePath(`/${lang}`, "layout");
   revalidatePath(`/${lang}/admin/settings`);
   return { ok: true };
@@ -101,6 +103,7 @@ export async function saveDeliveryFees(
         .eq("id", f.id),
     ),
   );
+  updateTag("settings");
   revalidatePath(`/${lang}/admin/settings`);
   return { ok: true };
 }

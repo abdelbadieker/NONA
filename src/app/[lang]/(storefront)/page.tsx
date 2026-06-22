@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -8,6 +7,7 @@ import {
   getFeatured,
   getNewArrivals,
 } from "@/lib/data/catalog";
+import { Hero } from "@/components/home/Hero";
 import { ProductRail } from "@/components/product/ProductRail";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { Reviews } from "@/components/home/Reviews";
@@ -32,43 +32,22 @@ export default async function HomePage({
     getNewArrivals(10),
   ]);
 
+  const heroProduct = [...featured, ...bestSellers, ...newArrivals].find(
+    (p) => p.images?.length,
+  );
+
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blush-light to-cream">
-        <div className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-20">
-          <span className="inline-block rounded-full bg-white px-4 py-1 text-sm font-medium text-blush-dark shadow-sm">
-            {dict.home.heroBadge}
-          </span>
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-ink sm:text-6xl">
-            {dict.home.heroTitle}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
-            {dict.home.heroSubtitle}
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href={`${base}/shop`}
-              className="w-full rounded-full bg-ink px-7 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] sm:w-auto"
-            >
-              {dict.home.heroCta}
-            </Link>
-            <Link
-              href={`${base}/shop`}
-              className="w-full rounded-full border border-ink/15 bg-white px-7 py-3 text-sm font-semibold text-ink transition-colors hover:bg-blush-light sm:w-auto"
-            >
-              {dict.home.heroSecondary}
-            </Link>
-          </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-ink/70">
-            <span>✓ {dict.home.trustCod}</span>
-            <span>✓ {dict.home.trustDelivery}</span>
-            <span>✓ {dict.home.trustExchange}</span>
-          </div>
-        </div>
-      </section>
+      <Hero lang={lang} dict={dict} product={heroProduct} />
 
-      {/* Categories */}
+      <ProductRail
+        title={dict.home.bestSellers}
+        products={bestSellers}
+        lang={lang}
+        dict={dict}
+        href={`${base}/shop?sort=bestselling`}
+      />
+
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <h2 className="text-xl font-bold text-ink sm:text-2xl">
           {dict.home.categories}
@@ -84,13 +63,6 @@ export default async function HomePage({
         lang={lang}
         dict={dict}
         href={`${base}/shop`}
-      />
-      <ProductRail
-        title={dict.home.bestSellers}
-        products={bestSellers}
-        lang={lang}
-        dict={dict}
-        href={`${base}/shop?sort=bestselling`}
       />
       <ProductRail
         title={dict.home.newArrivals}

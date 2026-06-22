@@ -1,5 +1,7 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type {
   Order,
   OrderItem,
@@ -217,22 +219,26 @@ export async function getAllReasons(
   return (data as ReasonRow[] | null) ?? [];
 }
 
-export async function getStoreSettings() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("settings")
-    .select("key, value")
-    .in("key", ["store", "social"]);
-  const map = Object.fromEntries(
-    ((data as { key: string; value: Record<string, unknown> }[] | null) ?? []).map(
-      (r) => [r.key, r.value],
-    ),
-  );
-  return {
-    store: (map.store ?? {}) as Record<string, string>,
-    social: (map.social ?? {}) as Record<string, string>,
-  };
-}
+export const getStoreSettings = unstable_cache(
+  async () => {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from("settings")
+      .select("key, value")
+      .in("key", ["store", "social"]);
+    const map = Object.fromEntries(
+      ((data as { key: string; value: Record<string, unknown> }[] | null) ?? []).map(
+        (r) => [r.key, r.value],
+      ),
+    );
+    return {
+      store: (map.store ?? {}) as Record<string, string>,
+      social: (map.social ?? {}) as Record<string, string>,
+    };
+  },
+  ["store-settings"],
+  { revalidate: 300, tags: ["settings"] },
+);
 
 export async function getAllDeliveryFees() {
   const supabase = await createClient();

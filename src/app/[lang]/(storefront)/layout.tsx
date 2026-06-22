@@ -32,7 +32,7 @@ export default async function StorefrontLayout({
       <main id="main" className="flex-1">
         {children}
       </main>
-      <Footer lang={lang} dict={dict} />
+      <Footer lang={lang} dict={dict} store={settings.store} social={settings.social} />
       <BottomNav lang={lang} dict={dict} />
       <WhatsAppButton phone={settings.social.whatsapp ?? ""} />
       {marketing.metaPixelId && <MetaPixel pixelId={marketing.metaPixelId} />}

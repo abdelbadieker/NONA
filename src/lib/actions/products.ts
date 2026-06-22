@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdmin } from "@/lib/auth";
 import { productInputSchema, type ProductInput } from "@/lib/validation";
@@ -98,6 +98,7 @@ export async function saveProduct(
     }
   }
 
+  updateTag("catalog");
   revalidatePath(`/${lang}/admin/products`);
   revalidatePath(`/${lang}/admin`);
   return { ok: true, id: productId };
@@ -111,6 +112,7 @@ export async function deleteProduct(
   if (!admin) return { ok: false };
   const supabase = createAdminClient();
   await supabase.from("products").delete().eq("id", id);
+  updateTag("catalog");
   revalidatePath(`/${lang}/admin/products`);
   return { ok: true };
 }
@@ -124,6 +126,7 @@ export async function toggleProductActive(
   if (!admin) return { ok: false };
   const supabase = createAdminClient();
   await supabase.from("products").update({ is_active: isActive }).eq("id", id);
+  updateTag("catalog");
   revalidatePath(`/${lang}/admin/products`);
   return { ok: true };
 }

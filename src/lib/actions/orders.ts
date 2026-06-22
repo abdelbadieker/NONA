@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -208,6 +208,7 @@ export async function updateOrderStatus(input: {
     };
   }
 
+  updateTag("catalog");
   revalidatePath(`/${input.lang}/admin/orders/${input.orderId}`);
   revalidatePath(`/${input.lang}/admin/orders`);
   revalidatePath(`/${input.lang}/admin`);

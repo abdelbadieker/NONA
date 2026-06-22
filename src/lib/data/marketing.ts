@@ -1,6 +1,6 @@
 import "server-only";
-import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type MarketingPublic = {
@@ -8,20 +8,24 @@ export type MarketingPublic = {
   tiktokPixelId: string;
 };
 
-/** Public pixel IDs (safe for the browser). Cached per request. */
-export const getMarketingPublic = cache(async (): Promise<MarketingPublic> => {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "marketing")
-    .maybeSingle();
-  const v = (data?.value ?? {}) as Record<string, string>;
-  return {
-    metaPixelId: v.meta_pixel_id || "",
-    tiktokPixelId: v.tiktok_pixel_id || "",
-  };
-});
+/** Public pixel IDs (safe for the browser). Cached across requests. */
+export const getMarketingPublic = unstable_cache(
+  async (): Promise<MarketingPublic> => {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "marketing")
+      .maybeSingle();
+    const v = (data?.value ?? {}) as Record<string, string>;
+    return {
+      metaPixelId: v.meta_pixel_id || "",
+      tiktokPixelId: v.tiktok_pixel_id || "",
+    };
+  },
+  ["marketing-public"],
+  { revalidate: 300, tags: ["settings"] },
+);
 
 /** Full marketing config incl. the secret CAPI token. SERVER-ONLY. */
 export async function getMarketingServer(): Promise<{

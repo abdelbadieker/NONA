@@ -35,7 +35,6 @@ export function LanguageSwitcher({
     const segments = (pathname || "/").split("/");
     segments[1] = next; // replace the locale segment
     router.push(segments.join("/") || `/${next}`);
-    router.refresh();
     setOpen(false);
   }
 
