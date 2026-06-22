@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { cairo, inter } from "@/lib/fonts";
 import { locales, isLocale, getDirection } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { siteUrl } from "@/lib/site";
 import "../globals.css";
 
 export async function generateStaticParams() {
@@ -20,9 +21,7 @@ export async function generateMetadata({
   const dict = await getDictionary(lang);
   const ogLocale = lang === "ar" ? "ar_DZ" : lang === "fr" ? "fr_DZ" : "en_US";
   return {
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    ),
+    metadataBase: siteUrl(),
     title: { default: dict.meta.title, template: "%s | NONA" },
     description: dict.meta.description,
     openGraph: {

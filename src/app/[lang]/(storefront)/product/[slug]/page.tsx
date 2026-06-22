@@ -8,6 +8,7 @@ import { getProductBySlug } from "@/lib/data/catalog";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchase } from "@/components/product/ProductPurchase";
 import { ViewContentTracker } from "@/components/marketing/Trackers";
+import { SITE_URL } from "@/lib/site";
 import { pickLocale } from "@/lib/utils";
 
 export async function generateMetadata({
@@ -47,7 +48,7 @@ export default async function ProductPage({
   const images = product.images.map((i) => ({ url: i.url }));
   const Back = (lang as Locale) === "ar" ? ArrowRight : ArrowLeft;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = SITE_URL;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",

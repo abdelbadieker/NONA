@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdmin } from "@/lib/auth";
 import { getMarketingServer } from "@/lib/data/marketing";
 import { sendMetaPurchase } from "@/lib/meta-capi";
+import { SITE_URL } from "@/lib/site";
 import { orderInputSchema, type OrderInput } from "@/lib/validation";
 import type { OrderStatus } from "@/lib/types";
 
@@ -148,7 +149,7 @@ export async function createOrder(input: OrderInput): Promise<Result> {
         userAgent: hdrs.get("user-agent") ?? undefined,
         fbp: cookieStore.get("_fbp")?.value,
         fbc: cookieStore.get("_fbc")?.value,
-        eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${d.locale}/checkout`,
+        eventSourceUrl: `${SITE_URL}/${d.locale}/checkout`,
       });
     }
   } catch {

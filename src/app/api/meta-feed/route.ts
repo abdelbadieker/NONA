@@ -1,8 +1,7 @@
 import type { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isLocale, defaultLocale } from "@/i18n/config";
-
-const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+import { SITE_URL as base } from "@/lib/site";
 
 function csv(v: string) {
   return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
