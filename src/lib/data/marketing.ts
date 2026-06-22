@@ -23,8 +23,8 @@ export const getMarketingPublic = unstable_cache(
       tiktokPixelId: v.tiktok_pixel_id || "",
     };
   },
-  ["marketing-public"],
-  { revalidate: 300, tags: ["settings"] },
+  ["marketing-public-v2"],
+  { revalidate: 120, tags: ["settings"] },
 );
 
 /** Full marketing config incl. the secret CAPI token. SERVER-ONLY. */

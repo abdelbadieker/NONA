@@ -236,8 +236,8 @@ export const getStoreSettings = unstable_cache(
       social: (map.social ?? {}) as Record<string, string>,
     };
   },
-  ["store-settings"],
-  { revalidate: 300, tags: ["settings"] },
+  ["store-settings-v2"],
+  { revalidate: 120, tags: ["settings"] },
 );
 
 export async function getAllDeliveryFees() {
