@@ -44,7 +44,7 @@ export const getCategories = unstable_cache(
       .order("position", { ascending: true });
     return (data as Category[] | null) ?? [];
   },
-  ["categories"],
+  ["categories-v2"],
   { revalidate: 300, tags: ["catalog"] },
 );
 
@@ -94,7 +94,7 @@ export const getProductCards = unstable_cache(
     const { data } = await q;
     return ((data as ProductCardData[] | null) ?? []).map(sortImages);
   },
-  ["product-cards"],
+  ["product-cards-v2"],
   { revalidate: 120, tags: ["catalog"] },
 );
 
@@ -122,7 +122,7 @@ export const getProductBySlug = unstable_cache(
     p.variants = [...(p.variants ?? [])].sort((a, b) => a.position - b.position);
     return p;
   },
-  ["product-by-slug"],
+  ["product-by-slug-v2"],
   { revalidate: 120, tags: ["catalog"] },
 );
 
@@ -140,7 +140,7 @@ export const searchProducts = unstable_cache(
       .limit(40);
     return ((data as ProductCardData[] | null) ?? []).map(sortImages);
   },
-  ["search-products"],
+  ["search-products-v2"],
   { revalidate: 60, tags: ["catalog"] },
 );
 
@@ -154,6 +154,6 @@ export const getDeliveryFees = unstable_cache(
       .order("wilaya_code", { ascending: true });
     return (data as DeliveryFee[] | null) ?? [];
   },
-  ["delivery-fees"],
+  ["delivery-fees-v2"],
   { revalidate: 600, tags: ["settings"] },
 );
