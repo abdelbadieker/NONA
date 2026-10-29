@@ -37,7 +37,6 @@ export function SearchBar({
         aria-hidden
       />
       <input
-        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}

@@ -1,91 +1,102 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { isLocale } from "@/i18n/config";
 import { adminText } from "@/i18n/admin";
-import { getAdminProducts } from "@/lib/data/admin";
-import { ProductRowActions } from "@/components/admin/ProductRowActions";
-import { cn, formatPrice, pickLocale } from "@/lib/utils";
+import { adminOpsText } from "@/i18n/admin-ops";
+import { requireStaff } from "@/lib/auth";
+import { can } from "@/lib/permissions";
+import { getAllCategories, getProductsPage } from "@/lib/data/admin-ops";
+import { ProductTable } from "@/components/admin/ProductTable";
+import { EmptyState, NoAccess, PageHeader, Pagination, btnPrimary, btnSecondary, buildHref, inputCls } from "@/components/admin/ui";
+import { cn, pickLocale } from "@/lib/utils";
 
 export default async function AdminProductsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ q?: string; status?: string; category?: string; page?: string }>;
 }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-
   const t = adminText[lang];
-  const currency = lang === "ar" ? "دج" : "DA";
-  const products = await getAdminProducts();
+  const ops = adminOpsText[lang];
+  const staff = await requireStaff(lang);
+  if (!can(staff.permissions, "products.view")) return <NoAccess t={ops.common} />;
+
+  const sp = await searchParams;
+  const [result, categories] = await Promise.all([
+    getProductsPage({ q: sp.q, status: sp.status, category: sp.category, page: Number(sp.page) || 1 }),
+    getAllCategories(),
+  ]);
   const base = `/${lang}/admin/products`;
+  const keep = { q: sp.q, status: sp.status, category: sp.category };
+  const canManage = can(staff.permissions, "products.manage");
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink">{t.products.title}</h1>
-        <Link
-          href={`${base}/new`}
-          className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
-        >
-          <Plus className="size-4" aria-hidden />
-          {t.products.add}
-        </Link>
-      </div>
+      <PageHeader
+        title={t.products.title}
+        actions={
+          <>
+            <a href={buildHref("/api/admin/export/products", {})} download className={btnSecondary}>
+              <Download className="size-4" aria-hidden />
+              {ops.common.export}
+            </a>
+            {canManage && (
+              <Link href={`${base}/new`} className={btnPrimary}>
+                <Plus className="size-4" aria-hidden />
+                {t.products.add}
+              </Link>
+            )}
+          </>
+        }
+      />
 
-      <div className="overflow-hidden rounded-2xl border border-line bg-white">
-        {products.length === 0 ? (
-          <p className="p-10 text-center text-sm text-muted">
-            {t.products.empty}
-          </p>
-        ) : (
-          <ul className="divide-y divide-line">
-            {products.map((p) => (
-              <li
-                key={p.id}
-                className={cn(
-                  "flex items-center gap-3 p-3",
-                  !p.is_active && "opacity-60",
-                )}
-              >
-                <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-blush-light">
-                  {p.image && (
-                    <Image
-                      src={p.image}
-                      alt=""
-                      fill
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">
-                    {pickLocale(p, "name", lang)}
-                    {!p.is_active && (
-                      <span className="ms-2 text-xs text-muted">
-                        ({t.products.hidden})
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {formatPrice(p.price)} {currency} · {t.products.stock}:{" "}
-                    {p.total_stock}
-                  </p>
-                </div>
-                <ProductRowActions
-                  id={p.id}
-                  isActive={p.is_active}
-                  lang={lang}
-                  editHref={`${base}/${p.id}`}
-                  deleteConfirm={t.products.deleteConfirm}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <form method="get" className="grid gap-2 rounded-2xl border border-line bg-white p-3 sm:grid-cols-4">
+        <input name="q" defaultValue={sp.q ?? ""} placeholder={ops.common.search} aria-label={ops.common.search} className={cn(inputCls, "sm:col-span-2")} />
+        <select name="status" defaultValue={sp.status ?? ""} aria-label={ops.products.filterStatus} className={inputCls}>
+          <option value="">{ops.products.status.active} + {ops.products.status.draft}</option>
+          {(["active", "draft", "archived"] as const).map((s) => (
+            <option key={s} value={s}>
+              {ops.products.status[s]}
+            </option>
+          ))}
+        </select>
+        <select name="category" defaultValue={sp.category ?? ""} aria-label={ops.products.filterCategory} className={inputCls}>
+          <option value="">{ops.products.filterCategory}: {ops.common.all}</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {pickLocale(c, "name", lang)}
+            </option>
+          ))}
+        </select>
+        <div className="flex gap-2 sm:col-span-4">
+          <button type="submit" className={btnSecondary}>
+            {ops.common.filter}
+          </button>
+          <Link href={base} className="px-2 py-2 text-sm text-muted hover:text-ink">
+            {ops.common.reset}
+          </Link>
+        </div>
+      </form>
+
+      {result.rows.length === 0 ? (
+        <div className="rounded-2xl border border-line bg-white">
+          <EmptyState text={t.products.empty} />
+        </div>
+      ) : (
+        <ProductTable
+          rows={result.rows}
+          lang={lang}
+          ops={ops}
+          stockLabel={t.products.stock}
+          canManage={canManage}
+          currency={lang === "ar" ? "دج" : "DA"}
+        />
+      )}
+      <Pagination page={result.page} pages={result.pages} total={result.total} hrefFor={(p) => buildHref(base, { ...keep, page: p })} t={ops.common} />
     </div>
   );
 }

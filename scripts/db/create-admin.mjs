@@ -43,9 +43,13 @@ if (created?.user) {
   }
 }
 
+// role_key (0003_security_hardening) controls permissions; the first account
+// created with this script is the store owner.
+const roleKey = process.argv[4] || "owner";
 const { error: adminErr } = await supabase.from("admins").upsert({
   id: userId,
   role: "admin",
+  role_key: roleKey,
   email,
   full_name: "NONA Admin",
   is_active: true,

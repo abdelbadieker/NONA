@@ -8,11 +8,15 @@ import { cn } from "@/lib/utils";
 export function ProductGallery({
   images,
   alt,
+  initialIndex = 0,
+  closeLabel = "close",
 }: {
-  images: { url: string }[];
+  images: { url: string; alt?: string }[];
   alt: string;
+  initialIndex?: number;
+  closeLabel?: string;
 }) {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(Math.min(initialIndex, Math.max(0, images.length - 1)));
   const [zoom, setZoom] = useState(false);
 
   if (!images.length) {
@@ -29,7 +33,7 @@ export function ProductGallery({
       >
         <Image
           src={images[active].url}
-          alt={alt}
+          alt={images[active].alt || alt}
           fill
           priority
           sizes="(max-width: 768px) 100vw, 500px"
@@ -63,13 +67,16 @@ export function ProductGallery({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
           onClick={() => setZoom(false)}
+          onKeyDown={(e) => e.key === "Escape" && setZoom(false)}
           role="dialog"
           aria-modal="true"
+          aria-label={alt}
         >
           <button
             type="button"
+            autoFocus
             className="absolute end-4 top-4 grid size-10 place-items-center rounded-full bg-white/15 text-white"
-            aria-label="close"
+            aria-label={closeLabel}
           >
             <X className="size-5" aria-hidden />
           </button>

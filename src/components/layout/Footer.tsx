@@ -2,6 +2,9 @@ import Link from "next/link";
 import { BadgeCheck, MapPin, Phone, RefreshCw, Truck } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/ar";
+import type { StoreText } from "@/i18n/store";
+import { NewsletterForm } from "@/components/forms/NewsletterForm";
+import { pickLocale } from "@/lib/utils";
 
 type IconProps = { className?: string };
 
@@ -26,11 +29,15 @@ const TiktokIcon = ({ className }: IconProps) => (
 export function Footer({
   lang,
   dict,
+  st,
+  pages = [],
   store = {},
   social = {},
 }: {
   lang: Locale;
   dict: Dictionary;
+  st: StoreText;
+  pages?: { slug: string; title_ar: string; title_fr: string | null; title_en: string | null }[];
   store?: Record<string, string>;
   social?: Record<string, string>;
 }) {
@@ -47,20 +54,24 @@ export function Footer({
     { href: base, label: dict.nav.home },
     { href: `${base}/shop`, label: dict.nav.shop },
     { href: `${base}/wishlist`, label: dict.nav.wishlist },
+    { href: `${base}/cart`, label: st.nav.cart },
   ];
 
+  // Only routes that exist; CMS pages appear once published in the admin.
   const helpLinks = [
+    { href: `${base}/track`, label: st.nav.track },
     { href: `${base}/faq`, label: dict.footer.faq },
     { href: `${base}/shipping`, label: dict.footer.shipping },
-    { href: `${base}/returns`, label: dict.footer.returns },
     { href: `${base}/contact`, label: dict.footer.contact },
+    ...pages.map((p) => ({ href: `${base}/pages/${p.slug}`, label: pickLocale(p, "title", lang) })),
   ];
 
+  // Only https links are rendered (also enforced when saving settings).
   const socials = [
-    { href: social.instagram, Icon: InstagramIcon },
-    { href: social.facebook, Icon: FacebookIcon },
-    { href: social.tiktok, Icon: TiktokIcon },
-  ].filter((s) => s.href);
+    { href: social.instagram, Icon: InstagramIcon, name: "Instagram" },
+    { href: social.facebook, Icon: FacebookIcon, name: "Facebook" },
+    { href: social.tiktok, Icon: TiktokIcon, name: "TikTok" },
+  ].filter((s) => typeof s.href === "string" && s.href.startsWith("https://"));
 
   return (
     <footer className="border-t border-line bg-cream">
@@ -103,13 +114,13 @@ export function Footer({
 
           {socials.length > 0 && (
             <div className="mt-4 flex gap-2">
-              {socials.map(({ href, Icon }, i) => (
+              {socials.map(({ href, Icon, name }) => (
                 <a
-                  key={i}
+                  key={name}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="social"
+                  aria-label={name}
                   className="grid size-9 place-items-center rounded-full bg-white text-ink shadow-sm transition-colors hover:bg-blush-light hover:text-blush-dark"
                 >
                   <Icon className="size-4" />
@@ -117,6 +128,10 @@ export function Footer({
               ))}
             </div>
           )}
+
+          <div className="mt-6 max-w-sm">
+            <NewsletterForm lang={lang} t={st.forms} />
+          </div>
         </div>
 
         <nav aria-label={dict.footer.shopTitle}>

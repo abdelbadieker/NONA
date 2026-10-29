@@ -144,6 +144,25 @@ export const searchProducts = unstable_cache(
   { revalidate: 60, tags: ["catalog"] },
 );
 
+export type DeliverySettings = { freeThreshold: number; daysMin: number; daysMax: number };
+
+/** Public delivery settings (free-shipping threshold, usual delay). */
+export const getDeliverySettings = unstable_cache(
+  async (): Promise<DeliverySettings> => {
+    const supabase = createPublicClient();
+    const { data } = await supabase.from("settings").select("value").eq("key", "delivery").maybeSingle();
+    const v = (data?.value ?? {}) as Record<string, unknown>;
+    const n = (x: unknown, d: number) => (Number.isFinite(Number(x)) ? Number(x) : d);
+    return {
+      freeThreshold: Math.max(0, n(v.free_threshold, 0)),
+      daysMin: n(v.default_days_min, 2),
+      daysMax: n(v.default_days_max, 5),
+    };
+  },
+  ["delivery-settings-v1"],
+  { revalidate: 600, tags: ["settings"] },
+);
+
 export const getDeliveryFees = unstable_cache(
   async (): Promise<DeliveryFee[]> => {
     const supabase = createPublicClient();

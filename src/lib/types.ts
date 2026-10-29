@@ -47,7 +47,29 @@ export type Product = {
   delivery_days_max: number | null;
   created_at: string;
   updated_at: string;
+  // 0004_commerce_core
+  vendor?: string | null;
+  product_type?: string | null;
+  tags?: string[];
+  cost_price?: number | null;
+  weight_grams?: number | null;
+  seo?: LocalizedSeo;
+  details?: ProductDetails;
+  internal_notes?: string | null;
+  archived_at?: string | null;
+  status?: "active" | "draft" | "archived";
 };
+
+export type LocalizedSeo = Partial<Record<"ar" | "fr" | "en", { title?: string; description?: string }>>;
+
+export type ProductDetailFields = {
+  material?: string;
+  care?: string;
+  fit?: string;
+  size_guide?: string;
+  model?: string;
+};
+export type ProductDetails = Partial<Record<"ar" | "fr" | "en", ProductDetailFields>>;
 
 export type ProductImage = {
   id: string;
@@ -72,6 +94,11 @@ export type ProductVariant = {
   position: number;
   is_active: boolean;
   created_at: string;
+  // 0004_commerce_core
+  barcode?: string | null;
+  cost_price?: number | null;
+  image_url?: string | null;
+  low_stock_threshold?: number | null;
 };
 
 export type Order = {
@@ -125,6 +152,9 @@ export type DeliveryFee = {
   home_fee: number;
   stopdesk_fee: number;
   is_active: boolean;
+  // 0004_commerce_core
+  home_enabled?: boolean;
+  stopdesk_enabled?: boolean;
 };
 
 export type Setting<T = unknown> = {

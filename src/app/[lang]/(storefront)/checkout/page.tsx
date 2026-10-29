@@ -1,52 +1,48 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { checkoutText } from "@/i18n/checkout";
+import { storeText } from "@/i18n/store";
 import { getDictionary } from "@/i18n/dictionaries";
 import { getDeliveryFees, getProductBySlug } from "@/lib/data/catalog";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
-import { pickLocale } from "@/lib/utils";
+import type { CartItem } from "@/lib/cart";
+
+export const metadata: Metadata = { robots: { index: false } };
+
+const UUID = /^[0-9a-f-]{36}$/i;
 
 export default async function CheckoutPage({
   params,
   searchParams,
 }: {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ product?: string; variant?: string; qty?: string }>;
+  searchParams: Promise<{ buy?: string; product?: string; variant?: string; qty?: string }>;
 }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const { product: slug, variant: variantId, qty } = await searchParams;
+  const sp = await searchParams;
   const t = checkoutText[lang];
+  const st = storeText[lang];
   const dict = await getDictionary(lang);
 
-  const product = slug ? await getProductBySlug(slug) : null;
-  const variant = product?.variants.find((v) => v.id === variantId);
-
-  if (!product || !variant) {
-    return (
-      <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-4 px-6 py-20 text-center">
-        <h1 className="text-2xl font-bold text-ink">{t.emptyTitle}</h1>
-        <p className="text-muted">{t.emptyText}</p>
-        <Link
-          href={`/${lang}/shop`}
-          className="mt-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white"
-        >
-          {t.goShop}
-        </Link>
-      </div>
-    );
+  // Buy-now: ?buy=<variantId>:<qty>  (legacy: ?product=<slug>&variant=<id>&qty=<n>)
+  let buyNow: CartItem[] = [];
+  const [buyVariant, buyQty] = (sp.buy ?? "").split(":");
+  const variantId = UUID.test(buyVariant ?? "") ? buyVariant : UUID.test(sp.variant ?? "") ? sp.variant : null;
+  if (variantId) {
+    const qty = Math.min(99, Math.max(1, Number(buyQty ?? sp.qty) || 1));
+    // The product id is only used for analytics; prices come from the server quote.
+    let productId = variantId;
+    if (sp.product) {
+      const p = await getProductBySlug(sp.product);
+      productId = p?.variants.some((v) => v.id === variantId) ? p.id : variantId;
+    }
+    buyNow = [{ variantId, productId, qty }];
   }
 
   const deliveryFees = await getDeliveryFees();
-  const name = pickLocale(product, "name", lang);
-  const image = product.images[0]?.url ?? null;
-  const unitPrice = variant.price_override ?? product.price;
-  const initialQty = Math.min(
-    Math.max(1, Number(qty) || 1),
-    Math.max(1, variant.stock),
-  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
@@ -55,16 +51,10 @@ export default async function CheckoutPage({
         <CheckoutForm
           lang={lang}
           t={t}
+          st={st}
           currency={dict.common.currency}
-          product={{ id: product.id, slug: product.slug, name, image }}
-          variant={{
-            id: variant.id,
-            size: variant.size,
-            color: variant.color,
-            stock: variant.stock,
-            unitPrice,
-          }}
-          initialQty={initialQty}
+          mode={buyNow.length ? "buy_now" : "cart"}
+          buyNowItems={buyNow}
           deliveryFees={deliveryFees}
         />
       </div>

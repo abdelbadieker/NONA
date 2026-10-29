@@ -1,45 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { createLocalStore, useHydrated } from "@/lib/local-store";
 
-const KEY = "nona_wishlist";
-const EVENT = "nona:wishlist";
+const EMPTY: string[] = [];
 
-function read(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
+const store = createLocalStore<string[]>("nona_wishlist", EMPTY, (raw) =>
+  Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string").slice(0, 200) : EMPTY,
+);
 
-function write(ids: string[]) {
-  localStorage.setItem(KEY, JSON.stringify(ids));
-  window.dispatchEvent(new CustomEvent(EVENT));
-}
-
-/** Guest wishlist backed by localStorage, synced across components on the page. */
+/** Guest wishlist backed by localStorage, synced across components and tabs. */
 export function useWishlist() {
-  const [ids, setIds] = useState<string[]>([]);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setIds(read());
-    setReady(true);
-    const sync = () => setIds(read());
-    window.addEventListener(EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
+  const ids = useSyncExternalStore(store.subscribe, store.get, store.getServerSnapshot);
+  const ready = useHydrated();
 
   const toggle = useCallback((id: string) => {
-    const cur = read();
-    write(cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+    const cur = store.get();
+    store.set(cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
   }, []);
 
   const has = useCallback((id: string) => ids.includes(id), [ids]);

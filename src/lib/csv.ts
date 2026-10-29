@@ -14,11 +14,12 @@ export function csvCell(value: unknown): string {
 export function toCsv<T>(
   rows: readonly T[],
   columns: readonly { header: string; value: (row: T) => unknown }[],
+  { bom = true }: { bom?: boolean } = {},
 ): string {
   const lines = [columns.map((c) => csvCell(c.header)).join(",")];
   for (const row of rows) lines.push(columns.map((c) => csvCell(c.value(row))).join(","));
-  // BOM so Excel opens UTF-8 (Arabic) correctly.
-  return "﻿" + lines.join("\r\n");
+  // BOM so Excel opens UTF-8 (Arabic) correctly; machine feeds can opt out.
+  return (bom ? "﻿" : "") + lines.join("\r\n");
 }
 
 /** Minimal RFC 4180 parser (quoted fields, escaped quotes, CRLF/LF). */

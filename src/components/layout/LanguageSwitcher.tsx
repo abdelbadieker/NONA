@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
+/** Persist the chosen language (read by the proxy on the next visit). */
+function persistLocale(next: Locale) {
+  document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+}
+
 export function LanguageSwitcher({
   locale,
   label,
@@ -31,7 +36,7 @@ export function LanguageSwitcher({
   }, []);
 
   function switchTo(next: Locale) {
-    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
+    persistLocale(next);
     const segments = (pathname || "/").split("/");
     segments[1] = next; // replace the locale segment
     router.push(segments.join("/") || `/${next}`);

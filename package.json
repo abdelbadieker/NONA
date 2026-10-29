@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node --env-file=.env.local scripts/db/run-sql.mjs supabase/migrations/0001_init.sql",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "db:migrate": "node --env-file=.env.local scripts/db/migrate.mjs",
+    "db:migrate:status": "node --env-file=.env.local scripts/db/migrate.mjs --status",
+    "db:migrate:dry": "node --env-file=.env.local scripts/db/migrate.mjs --dry-run",
     "db:seed": "node --env-file=.env.local scripts/db/run-sql.mjs supabase/seed.sql",
     "db:query": "node --env-file=.env.local scripts/db/query.mjs"
   },
