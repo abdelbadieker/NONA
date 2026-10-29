@@ -9,6 +9,7 @@ import type { Dictionary } from "@/i18n/dictionaries/ar";
 import type { StoreText } from "@/i18n/store";
 import type { ProductVariant } from "@/lib/types";
 import { useCart } from "@/lib/cart";
+import { resolveVariant, sizeAvailable } from "@/lib/variants";
 import { trackAddToCart } from "@/lib/pixel";
 import { cn, formatPrice, interpolate } from "@/lib/utils";
 import { WishlistButton } from "./WishlistButton";
@@ -57,21 +58,14 @@ export function ProductPurchase({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const variant = useMemo(
-    () =>
-      active.find(
-        (v) =>
-          (sizes.length ? v.size === size : v.size == null) &&
-          (colors.length ? v.color === color : v.color == null),
-      ) ?? (sizes.length === 0 && colors.length === 0 ? active[0] : undefined),
-    [active, size, color, sizes, colors],
+  const { variant, needsSize, needsColor } = useMemo(
+    () => resolveVariant(active, size, color),
+    [active, size, color],
   );
 
   const stock = variant?.stock ?? 0;
   const price = variant?.price_override ?? basePrice;
   const hasDiscount = comparePrice != null && comparePrice > price;
-  const needsSize = sizes.length > 0 && !size;
-  const needsColor = colors.length > 0 && !color;
   const maxQty = Math.max(1, Math.min(stock, 99));
   const q = Math.min(qty, maxQty);
   const canOrder = !!variant && stock > 0 && !needsSize && !needsColor;
@@ -119,9 +113,7 @@ export function ProductPurchase({
           <legend className="mb-2 text-sm font-medium text-ink">{dict.product.size}</legend>
           <div className="flex flex-wrap gap-2">
             {sizes.map((s) => {
-              const avail = active.some(
-                (v) => v.size === s && (color ? v.color === color : true) && v.stock > 0,
-              );
+              const avail = sizeAvailable(active, s, color);
               return (
                 <button
                   key={s}

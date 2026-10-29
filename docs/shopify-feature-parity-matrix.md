@@ -54,7 +54,7 @@ _Updated 2026-10-29. Statuses are evidence-based. A page, table or button existi
 | Fashion details: material, care, fit, size guide, model info | UNVERIFIED | `products.details` jsonb, product page "Details" | Per-product structured size tables are free text | — |
 | Variant options (size × colour) | PARTIAL | existing size/colour columns | Option names per product not configurable (always size/colour) | Unit: duplicate-variant rule |
 | Colour → image switching | UNVERIFIED | `variant.image_url`, `ProductView.tsx` | — | — |
-| Sold-out / unavailable variant states | UNVERIFIED | `ProductPurchase.tsx` (struck-through sizes) | — | — |
+| Sold-out / unavailable variant states | VERIFIED | `lib/variants.ts`, `ProductPurchase.tsx` | Fixed live bug: unsized colours showed "sold out" (audit D11) | Unit: variants; browser-checked on `robe-m31t` |
 | Create / edit / duplicate / archive / restore | UNVERIFIED | `actions/products.ts` | — | — |
 | Safe delete (never-ordered only) | UNVERIFIED | `deleteProduct` | — | — |
 | Bulk edit (status, feature, % price) | UNVERIFIED | `bulkUpdateProducts`, `bulkAdjustPrice` | — | — |
@@ -239,8 +239,8 @@ _Updated 2026-10-29. Statuses are evidence-based. A page, table or button existi
 | Capability | Status | Notes |
 | --- | --- | --- |
 | Home, shop, search, product, wishlist | VERIFIED (existing, build passes) | Unchanged except product page |
-| Cart, checkout, tracking, FAQ, shipping, contact, CMS pages | UNVERIFIED | — |
-| Broken footer links | Fixed (UNVERIFIED in browser) | — |
+| Cart, checkout, tracking, FAQ, shipping, contact, CMS pages | PARTIAL verification | FAQ/shipping/contact/track pages and add-to-cart + badge VERIFIED in browser; cart pricing, checkout submit and tracking lookup need migrations |
+| Broken footer links | VERIFIED | All 8 footer links return 200 (previously 4 were 404) |
 | Faceted filters (size, colour, price) | MISSING | — |
 
 ## T — i18n / RTL

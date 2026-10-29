@@ -63,6 +63,7 @@ No framework, database, or auth system was replaced.
 | D7 | `products.sold_count` never updated → "best selling" sort meaningless. | Maintained by trigger on delivered/undelivered. |
 | D8 | Payment, order and fulfilment states conflated; a COD order had no notion of cash collected. | `payment_status` (pending / collected / settled / refunded / voided) + COD amounts, separate from `status`. |
 | D9 | Deleting a cancellation/return reason nulled it on past orders (reports lose data). | Reasons are deactivated instead. |
+| D11 | **Live sales blocker:** 7 of 15 live products mix variants with and without a size (e.g. `robe-m31t`: yellow = "Standard", green/black/brown = no size). The product page required an exact size match, so those colours showed **"sold out" despite 20 units each** and couldn't be ordered. Found during the browser smoke test. | `src/lib/variants.ts#resolveVariant` treats an empty option as "not applicable"; unit-tested against the real data shape; verified in the browser (all 4 colours orderable). |
 | D10 | `0001_init.sql` is not re-runnable (unguarded `create policy`). | Left untouched (already applied in production); new migrations are idempotent and a tracked runner (`scripts/db/migrate.mjs`) treats 0001/0002 as a baseline. |
 
 ### 4.3 Product / UX gaps found

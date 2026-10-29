@@ -18,9 +18,11 @@ Database tests need no Supabase project: `tests/db/harness.ts` starts an in-proc
 | --- | --- | --- |
 | Typecheck | ✅ | ✅ |
 | Lint | ❌ 15 errors, 1 warning | ✅ 0 problems |
-| Tests | none | ✅ **46 passed** (3 files) |
+| Tests | none | ✅ **50 passed** (4 files) |
 | Build | ✅ 48 pages | ✅ 87 pages |
-| Browser smoke test against a real DB | — | ⏳ not run: migrations 0003–0005 not applied to Supabase yet |
+| Browser smoke test (read-only, live DB, before migrations) | — | ✅ partial — see below |
+
+**Smoke test performed (dev server against the live database, reads only):** Arabic homepage renders RTL with no console errors; product page renders; the variant bug D11 was found here, fixed and re-verified (4/4 colours orderable); add-to-cart updates the header badge ("السلة (1)"); the cart page shows the line and **fails safely** with a localized error because `quote_order` doesn't exist yet (server log: "Could not find the function public.quote_order"), checkout disabled; `/ar/faq`, `/ar/shipping` (58 live wilaya rows), `/fr/contact`, `/en/track` return 200; all 8 footer links return 200. **Not yet exercised:** checkout submission, tracking lookup, every admin screen. They need migrations 0003–0005.
 
 ## 3. Test inventory
 
@@ -31,6 +33,8 @@ Database tests need no Supabase project: `tests/db/harness.ts` starts an in-proc
 - Lifecycle: TS map ≡ DB rules (36 pairs); illegal transitions rejected by trigger; confirm commits stock; cancel releases once; double-cancel is a no-op; insufficient stock blocks confirmation with no side effects; COD payment status, `sold_count`, customer stats; post-delivery return restocks once.
 - Inventory: atomic adjust + log; negative refused; optimistic concurrency; reason whitelist.
 - RLS: anon sees only active catalog, no orders/customers/RPCs; archived products hidden (and constraint-protected); signed-in shoppers can browse (private-schema grant); analyst read-only, no secrets; fulfillment can update but not delete orders; product manager can't see orders; manager can't change staff or settings; admin can; legacy inserts get a `role_key`.
+
+**`tests/unit/variants.test.ts` (4):** variant resolution with mixed sized/unsized variants (live data shape), required-option logic, exact-match preference, size availability.
 
 **`tests/unit/lib.test.ts` (12) / `metrics.test.ts` (4):** CSV formula injection + parser round-trip (Arabic, quotes, newlines); permission checks; status map invariants; audit redaction; theme/pixel/URL injection rejected; checkout/discount/product/form schemas; metric formulas and denominators.
 
