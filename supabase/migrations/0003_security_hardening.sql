@@ -9,8 +9,9 @@
 -- day-to-day operations permissions.
 -- ============================================================
 
--- RLS policies call private.* helpers, so the API role needs USAGE on the
--- schema. (The schema itself is not exposed through PostgREST.)
+-- Policies reference private.* helpers by OID, so they work without this;
+-- the grant only allows name-based use (e.g. in views). The schema itself is
+-- not exposed through PostgREST.
 grant usage on schema private to authenticated;
 
 -- ----------------------------------------------------------------

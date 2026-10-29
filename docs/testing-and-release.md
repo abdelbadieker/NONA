@@ -44,8 +44,9 @@ Database tests need no Supabase project: `tests/db/harness.ts` starts an in-proc
 
 > The new code **requires** migrations 0003–0005. Deploying code first would lock staff out of the admin (it reads `staff_roles`) and break checkout (it calls `create_order`). The migrations are backward compatible with the currently deployed code, so apply them first.
 
-1. **Backup:** Supabase Dashboard → Database → Backups (or `pg_dump` the `public`, `private` and `storage` schemas).
-2. **Connection:** set `SUPABASE_DB_URL` in `.env.local` to the **Session pooler** URI (Supabase → Connect). The direct `db.<ref>.supabase.co` host is IPv6-only and didn't resolve from this machine.
+0. **Merge first.** The live site runs unpushed code newer than this repository (see `architecture-audit.md` §5.1). Merge this work into that source and keep its reviews, leads, blocked phones, spam/archive and attribution features. Deploying this folder as-is would remove them.
+1. **Backup:** `node --env-file=.env.local scripts/db/snapshot.mjs <dir>` (read-only JSON of all data and security definitions) plus Supabase Dashboard → Database → Backups (or `pg_dump` the `public`, `private` and `storage` schemas).
+2. **Connection:** `SUPABASE_DB_URL` uses the **Session pooler** `aws-0-eu-west-1.pooler.supabase.com:5432` (user `postgres.<ref>`). The direct `db.<ref>.supabase.co` host is IPv6-only and doesn't resolve from this machine. Verified: status and a full dry run passed on 2026-10-29.
 3. `npm run db:migrate:status`: read-only; lists pending migrations and detects the 0001/0002 baseline.
 4. `npm run db:migrate:dry`: applies all pending migrations in one transaction, then rolls back.
 5. `npm run db:migrate`: applies them for real. Each migration runs in its own transaction and is recorded in `private.schema_migrations`.

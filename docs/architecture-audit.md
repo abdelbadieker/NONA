@@ -76,6 +76,15 @@ No framework, database, or auth system was replaced.
 
 Inspected via the REST API with the service key (counts only, no row contents): 15 products, 49 images, 41 variants, 1 order (canceled), 2 auth users, 2 admins, 249 analytics rows, 58 wilayas, 1 bucket. **Migrations 0003–0005 have NOT been applied** to this database (see `testing-and-release.md` §4). The 249 analytics rows vs 1 order suggest the deployed code may differ from this source (this source only writes `order_placed`); verify before deploying.
 
+### 5.1 Deployed code ≠ GitHub (found 2026-10-29, before applying migrations)
+
+- GitHub `abdelbadieker/NONA` (public, only branch `main`, last push 2026-06-22 12:56 UTC) is **identical** to the downloaded source.
+- The live site **nona-one.vercel.app** runs newer, unpushed code: it has `/ar/faq` and product reviews; its HTML references leads and page-view tracking; `/cart` and `/track` return 404 there.
+- The live database has objects from that newer code: tables `blocked_phones`, `leads`, `reviews` (each with `is_admin`-based RLS); `orders.status_note`, `is_archived`, `is_spam`, `ad_source`, `attribution`, `custom_fields`; `admins.phone`. `page_view` analytics events start on 2026-06-22 at 23:54 UTC and continue today.
+- No other repository and no local folder (Downloads, Desktop, Documents, OneDrive) contains that code.
+- A schema diff showed **no conflicts** with 0003–0005: no shared column or table names. The full dry run passed on the live DB and was rolled back. A read-only snapshot of all data, policies, functions and triggers was saved outside the repo in `../db-snapshot-2026-10-29-pre-migration/` (contains customer data, keep private).
+- **Consequence:** this codebase must be merged into the deployed source before deploying, or it would remove reviews, leads, blocked phones, spam/archive and attribution. Migrations were **not applied** pending that merge (owner's choice).
+
 ## 6. Architecture after this work
 
 ```
