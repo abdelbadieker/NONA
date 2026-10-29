@@ -39,6 +39,21 @@ Next: period comparisons, reports with CSV export, Vercel Cron jobs (scheduled p
 ## Stage 8 — Hardening ⏳
 Playwright end-to-end journeys (needs approval to download browsers), accessibility audit (axe), generated Supabase types, load test of checkout and confirmation concurrency on a staging DB, CSP headers.
 
+## IN PROGRESS: rebuild the live-only features, then ship (owner said "do everything automatically")
+
+The live site (nona-one.vercel.app) runs unpushed code that can't be recovered. Rebuild these features on the **existing live tables**, using exactly these definitions (read from the live DB on 2026-10-29):
+
+- `blocked_phones(phone text PK, reason text, created_at timestamptz default now())`. Policy `blocked_admin_all` (is_admin). Use: reject or flag orders from blocked phones, plus an admin list.
+- `leads(id uuid PK, customer_name, customer_phone text NOT NULL UNIQUE (leads_phone_key), wilaya_code int, commune, product_slug, product_name, locale default 'ar', ad_source text, attribution jsonb NOT NULL default '{}', created_at, updated_at)`, index on created_at desc. Use: upsert from a partially filled checkout (name + valid phone), delete on order, admin list with call/WhatsApp links, 30-day retention.
+- `reviews(id uuid PK, product_id uuid FK products ON DELETE CASCADE, customer_name text NOT NULL, rating int CHECK 1..5, body text, status text default 'pending' CHECK pending/approved/rejected, created_at)`, indexes on product_id and status. Policies `reviews_select_public` (status = 'approved') and `reviews_admin_all`. Use: a "اتركي تقييمك" button on the product page and in the homepage "آراء عميلاتنا" section, moderation in the admin. One approved review exists.
+- `orders`: `status_note text`, `is_archived bool NOT NULL default false`, `is_spam bool NOT NULL default false`, `ad_source text`, `attribution jsonb NOT NULL default '{}'`, `custom_fields jsonb NOT NULL default '{}'`. **Replace this repo's `orders.utm`/`orders.source` (0004, not yet applied) with `attribution`/`ad_source`.**
+- `admins.phone text`.
+- `analytics` page views: `event_type='page_view'`, `path`, `locale`, `session_id`, `metadata.referrer`. Add a beacon (rate-limited route), then show sessions and conversion on the dashboard.
+- Product page: "قد يعجبكِ أيضًا" related-products rail.
+- The live checkout is the same single-product COD form as the original.
+
+Steps: add the definitions above to 0004/0005 with `create table/add column if not exists` (they're no-ops on live) → build the features + tests → cherry-pick onto `upgrade/commerce-platform` in `../NONA-github` (it already holds all earlier commits; `npm ci` was run there) → snapshot (`scripts/db/snapshot.mjs`) → `db:migrate` → push the branch (Vercel builds a **preview**; read its URL from the GitHub deployments API) → smoke-test the preview → merge to `main` (= production deploy via vercel[bot]).
+
 ## Suggested next 3 steps
 1. Apply migrations 0003–0005 (backup → status → dry run → migrate), then run the smoke test.
 2. Collections and faceted filters: highest storefront conversion value.
