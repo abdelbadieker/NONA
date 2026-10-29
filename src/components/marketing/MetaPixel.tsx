@@ -25,7 +25,7 @@ export function MetaPixel({ pixelId }: { pixelId: string }) {
         t.src=v;s=b.getElementsByTagName(e)[0];
         s.parentNode.insertBefore(t,s)}(window,document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '${pixelId}');
+        fbq('init', ${JSON.stringify(pixelId)});
         fbq('track', 'PageView');`}
       </Script>
       <noscript>
@@ -35,7 +35,7 @@ export function MetaPixel({ pixelId }: { pixelId: string }) {
           width="1"
           style={{ display: "none" }}
           alt=""
-          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+          src={`https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1`}
         />
       </noscript>
     </>

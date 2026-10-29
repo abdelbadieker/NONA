@@ -73,7 +73,7 @@ export default async function ProductPage({
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <ViewContentTracker id={product.id} value={product.price} />
       <nav className="mb-4">

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
 import { asRole, createTestDb, createUser, migrationFiles, one } from "./harness";
+import { canTransition, ORDER_STATUSES } from "@/lib/order-status";
 
 type Json = Record<string, unknown>;
 
@@ -334,6 +335,19 @@ describe("order lifecycle", () => {
     db = await createTestDb();
     variant = await variantId(db, "robe-soiree", "L", "وردي"); // stock 3
     staff = await createUser(db, "fulfil@test.dz", "fulfillment");
+  });
+
+  it("keeps the TypeScript transition map identical to the database rules", async () => {
+    for (const from of ORDER_STATUSES) {
+      for (const to of ORDER_STATUSES) {
+        const r = await one<{ ok: boolean }>(
+          db,
+          "select private.order_transition_allowed($1::order_status, $2::order_status) as ok",
+          [from, to],
+        );
+        expect(r.ok, `${from} -> ${to}`).toBe(canTransition(from, to));
+      }
+    }
   });
 
   it("rejects illegal transitions in the database itself", async () => {
