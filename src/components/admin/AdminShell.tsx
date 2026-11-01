@@ -17,10 +17,12 @@ import {
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  PhoneMissed,
   PlugZap,
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Star,
   Store,
   Users,
   X,
@@ -36,13 +38,14 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; icon: LucideIcon; perm: Permission; exact?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 
-function buildNav(base: string, nav: AdminText["nav"], ops: AdminOpsText["nav"]): NavGroup[] {
+function buildNav(base: string, nav: AdminText["nav"], ops: AdminOpsText["nav"], live: AdminOpsText["live"]): NavGroup[] {
   return [
     {
       label: ops.groups.sales,
       items: [
         { href: base, label: nav.dashboard, icon: LayoutDashboard, perm: "dashboard.view", exact: true },
         { href: `${base}/orders`, label: nav.orders, icon: ShoppingBag, perm: "orders.view" },
+        { href: `${base}/leads`, label: live.navLeads, icon: PhoneMissed, perm: "orders.view" },
       ],
     },
     {
@@ -50,6 +53,7 @@ function buildNav(base: string, nav: AdminText["nav"], ops: AdminOpsText["nav"])
       items: [
         { href: `${base}/products`, label: nav.products, icon: Package, perm: "products.view" },
         { href: `${base}/inventory`, label: ops.inventory, icon: Boxes, perm: "inventory.view" },
+        { href: `${base}/reviews`, label: live.navReviews, icon: Star, perm: "products.manage" },
       ],
     },
     {
@@ -183,6 +187,7 @@ export function AdminShell({
   lang,
   nav,
   ops,
+  live,
   adminName,
   roleLabel,
   permissions,
@@ -191,6 +196,7 @@ export function AdminShell({
   lang: Locale;
   nav: AdminText["nav"];
   ops: AdminOpsText["nav"];
+  live: AdminOpsText["live"];
   adminName: string;
   roleLabel: string;
   permissions: string[];
@@ -201,7 +207,7 @@ export function AdminShell({
   const [collapsed, setCollapsed] = useState(false);
   const base = `/${lang}/admin`;
 
-  const groups = buildNav(base, nav, ops)
+  const groups = buildNav(base, nav, ops, live)
     .map((g) => ({ ...g, items: g.items.filter((it) => can(permissions, it.perm)) }))
     .filter((g) => g.items.length);
 

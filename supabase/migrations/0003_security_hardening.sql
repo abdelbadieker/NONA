@@ -46,7 +46,8 @@ insert into public.staff_roles (key, name_ar, name_fr, name_en, permissions, is_
 on conflict (key) do nothing;
 
 alter table public.admins
-  add column if not exists role_key text references public.staff_roles(key) on update cascade;
+  add column if not exists role_key text references public.staff_roles(key) on update cascade,
+  add column if not exists phone text;  -- exists on the live database
 
 -- Backfill from the legacy enum column (admin → admin, manager → manager).
 update public.admins set role_key = role::text where role_key is null;

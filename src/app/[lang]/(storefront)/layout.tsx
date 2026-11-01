@@ -13,6 +13,7 @@ import { MetaPixel } from "@/components/marketing/MetaPixel";
 import { TikTokPixel } from "@/components/marketing/TikTokPixel";
 import { GoogleAnalytics } from "@/components/marketing/GoogleAnalytics";
 import { UtmCapture } from "@/components/marketing/UtmCapture";
+import { PageViewTracker } from "@/components/marketing/PageViewTracker";
 import { WhatsAppButton } from "@/components/marketing/WhatsAppButton";
 
 export default async function StorefrontLayout({
@@ -55,6 +56,7 @@ export default async function StorefrontLayout({
       <BottomNav lang={lang} dict={dict} cartLabel={st.nav.cart} />
       <WhatsAppButton phone={settings.social.whatsapp ?? ""} />
       <UtmCapture />
+      <PageViewTracker />
       {marketing.metaPixelId && <MetaPixel pixelId={marketing.metaPixelId} />}
       {marketing.tiktokPixelId && <TikTokPixel pixelId={marketing.tiktokPixelId} />}
       {marketing.ga4Id && <GoogleAnalytics measurementId={marketing.ga4Id} />}

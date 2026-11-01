@@ -25,7 +25,16 @@ import {
   type QuoteInput,
 } from "@/lib/validation";
 import { ORDER_STATUSES } from "@/lib/order-status";
+import { deriveAdSource } from "@/lib/attribution";
 import type { OrderStatus } from "@/lib/types";
+
+const siteHost = () => {
+  try {
+    return new URL(SITE_URL).host;
+  } catch {
+    return undefined;
+  }
+};
 
 // ── Storefront: quote & checkout ─────────────────────────
 
@@ -201,6 +210,7 @@ export async function placeOrder(input: CheckoutInput): Promise<PlaceOrderResult
       idempotency_key: d.idempotencyKey,
       user_id: user?.id ?? null,
       utm: d.utm ?? null,
+      ad_source: deriveAdSource(d.utm, siteHost()),
       source: d.source ?? "cart",
       customer: {
         name: d.customerName,
@@ -231,6 +241,8 @@ export async function placeOrder(input: CheckoutInput): Promise<PlaceOrderResult
       delivery_type_unavailable: "wilaya",
       discount: "discount",
       rate: "rate",
+      // Blocked numbers get the generic error: never reveal the blocklist.
+      blocked: "generic",
     };
     return { ok: false, error: map[e] ?? "generic", reason: r.reason as string | undefined };
   }
@@ -553,6 +565,50 @@ export async function setOrderFlag(input: {
   await addEvent(d.orderId, staff, "flag", d.reason || null, { flagged: d.flagged });
   await audit(staff, "order.flag", "order", d.orderId, { flagged: d.flagged });
   revalidateOrder(input.lang, d.orderId);
+  return { ok: true };
+}
+
+/** Spam orders are hidden from the default list and excluded from metrics. */
+export async function setOrderSpam(input: { orderId: string; spam: boolean; lang: string }): Promise<ActionResult> {
+  const staff = await authorize("orders.manage");
+  if (!staff) return { ok: false, error: "forbidden" };
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("orders").update({ is_spam: input.spam }).eq("id", input.orderId);
+  if (error) return { ok: false, error: "generic" };
+  await addEvent(input.orderId, staff, "flag", null, { spam: input.spam });
+  await audit(staff, input.spam ? "order.spam" : "order.unspam", "order", input.orderId);
+  revalidateOrder(input.lang, input.orderId);
+  return { ok: true };
+}
+
+/** Archived orders leave the working lists but stay in reports and history. */
+export async function setOrderArchived(input: { orderId: string; archived: boolean; lang: string }): Promise<ActionResult> {
+  const staff = await authorize("orders.manage");
+  if (!staff) return { ok: false, error: "forbidden" };
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("orders").update({ is_archived: input.archived }).eq("id", input.orderId);
+  if (error) return { ok: false, error: "generic" };
+  await addEvent(input.orderId, staff, "system", null, { archived: input.archived });
+  await audit(staff, input.archived ? "order.archive" : "order.unarchive", "order", input.orderId);
+  revalidateOrder(input.lang, input.orderId);
+  return { ok: true };
+}
+
+/** Block the order's phone (future orders rejected) and mark this order spam. */
+export async function blockOrderPhone(input: { orderId: string; reason?: string; lang: string }): Promise<ActionResult> {
+  const staff = await authorize("orders.manage");
+  if (!staff) return { ok: false, error: "forbidden" };
+  const supabase = createAdminClient();
+  const { data: order } = await supabase.from("orders").select("customer_phone").eq("id", input.orderId).maybeSingle();
+  if (!order) return { ok: false, error: "not_found" };
+  const { error } = await supabase
+    .from("blocked_phones")
+    .upsert({ phone: order.customer_phone, reason: (input.reason ?? "").slice(0, 200) || `order ${input.orderId.slice(0, 8)}` });
+  if (error) return { ok: false, error: "generic" };
+  await supabase.from("orders").update({ is_spam: true }).eq("id", input.orderId);
+  await addEvent(input.orderId, staff, "flag", null, { blocked: true, spam: true });
+  await audit(staff, "phone.block", "blocked_phone", order.customer_phone.slice(0, 4) + "******", { order: input.orderId });
+  revalidateOrder(input.lang, input.orderId);
   return { ok: true };
 }
 

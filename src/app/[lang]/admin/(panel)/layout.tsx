@@ -33,6 +33,7 @@ export default async function AdminPanelLayout({
       lang={lang}
       nav={adminText[lang].nav}
       ops={adminOpsText[lang].nav}
+      live={adminOpsText[lang].live}
       adminName={staff.fullName ?? staff.email ?? ""}
       roleLabel={role ? pickLocale(role, "name", lang) : staff.roleKey}
       permissions={staff.permissions}

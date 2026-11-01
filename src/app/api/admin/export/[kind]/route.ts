@@ -43,6 +43,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ kind
       q: sp.get("q") ?? undefined,
       from: sp.get("from") ?? undefined,
       to: sp.get("to") ?? undefined,
+      view: sp.get("view") === "spam" || sp.get("view") === "archived" ? (sp.get("view") as "spam" | "archived") : undefined,
+      source: sp.get("source") ?? undefined,
     });
     count = rows.length;
     const items = (r: Row) =>

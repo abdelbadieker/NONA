@@ -25,7 +25,10 @@ export const cartItemSchema = z.object({
 });
 
 const utmSchema = z
-  .record(z.string().regex(/^(utm_(source|medium|campaign|content|term)|fbclid|ttclid|gclid)$/), z.string().max(200))
+  .record(
+    z.string().regex(/^(utm_(source|medium|campaign|content|term)|fbclid|ttclid|gclid|referrer|landing)$/),
+    z.string().max(300),
+  )
   .optional();
 
 export const quoteInputSchema = z.object({
@@ -55,6 +58,33 @@ export const checkoutInputSchema = z.object({
   source: z.enum(["cart", "buy_now", "landing"]).optional(),
 });
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
+
+/** Abandoned-checkout lead (sent from the checkout once name + phone are valid). */
+export const leadInputSchema = z.object({
+  customerName: z.string().trim().min(2).max(80),
+  customerPhone: z.string().trim().regex(PHONE_RE),
+  wilayaCode: z.number().int().min(1).max(58).nullable().optional(),
+  commune: z.string().trim().max(80).optional().or(z.literal("")),
+  productSlug: z.string().trim().max(120).optional(),
+  productName: z.string().trim().max(160).optional(),
+  locale: localeEnum,
+  utm: utmSchema,
+});
+
+export const reviewInputSchema = z.object({
+  productId: uuid.nullable(),
+  customerName: z.string().trim().min(2).max(60),
+  rating: z.number().int().min(1).max(5),
+  body: z.string().trim().max(1000).optional().or(z.literal("")),
+  /** Honeypot. */
+  website: z.string().max(0).optional().or(z.literal("")),
+});
+
+export const pageViewSchema = z.object({
+  path: z.string().max(300).regex(/^\/(ar|fr|en)(\/|$)/),
+  sessionId: z.string().regex(/^[A-Za-z0-9-]{8,64}$/),
+  referrer: z.string().max(500).optional(),
+});
 
 export const trackOrderSchema = z.object({
   orderNumber: z.coerce.number().int().min(1).max(1_000_000_000),

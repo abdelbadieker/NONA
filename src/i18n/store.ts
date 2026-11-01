@@ -107,6 +107,22 @@ export type StoreText = {
     fit: string;
     sizeGuide: string;
     model: string;
+    related: string;
+  };
+  reviews: {
+    title: string;
+    leave: string;
+    name: string;
+    rating: string;
+    body: string;
+    submit: string;
+    sending: string;
+    thanks: string;
+    error: string;
+    rate: string;
+    invalid: string;
+    count: string;
+    close: string;
   };
 };
 
@@ -251,6 +267,22 @@ export const storeText: Record<Locale, StoreText> = {
       fit: "القصّة والمقاس",
       sizeGuide: "دليل المقاسات",
       model: "معلومات العارضة",
+      related: "قد يعجبكِ أيضًا",
+    },
+    reviews: {
+      title: "آراء عميلاتنا",
+      leave: "اتركي تقييمك",
+      name: "الاسم",
+      rating: "التقييم",
+      body: "رأيكِ (اختياري)",
+      submit: "إرسال التقييم",
+      sending: "جارٍ الإرسال…",
+      thanks: "شكراً! سيظهر تقييمكِ بعد المراجعة 💕",
+      error: "تعذّر الإرسال، حاولي مرة أخرى.",
+      rate: "أرسلتِ تقييمات كثيرة، حاولي لاحقاً.",
+      invalid: "أدخلي اسمكِ واختاري عدد النجوم.",
+      count: "{count} تقييم",
+      close: "إغلاق",
     },
   },
   fr: {
@@ -368,6 +400,22 @@ export const storeText: Record<Locale, StoreText> = {
       fit: "Coupe et taille",
       sizeGuide: "Guide des tailles",
       model: "Mannequin",
+      related: "Vous aimerez aussi",
+    },
+    reviews: {
+      title: "Avis de nos clientes",
+      leave: "Laisser un avis",
+      name: "Nom",
+      rating: "Note",
+      body: "Votre avis (optionnel)",
+      submit: "Envoyer l'avis",
+      sending: "Envoi…",
+      thanks: "Merci ! Votre avis sera publié après vérification 💕",
+      error: "Échec de l'envoi, réessayez.",
+      rate: "Trop d'avis envoyés, réessayez plus tard.",
+      invalid: "Saisissez votre nom et choisissez une note.",
+      count: "{count} avis",
+      close: "Fermer",
     },
   },
   en: {
@@ -485,6 +533,22 @@ export const storeText: Record<Locale, StoreText> = {
       fit: "Fit & sizing",
       sizeGuide: "Size guide",
       model: "Model info",
+      related: "You may also like",
+    },
+    reviews: {
+      title: "Customer reviews",
+      leave: "Leave a review",
+      name: "Name",
+      rating: "Rating",
+      body: "Your review (optional)",
+      submit: "Send review",
+      sending: "Sending…",
+      thanks: "Thank you! Your review will appear after moderation 💕",
+      error: "Couldn't send, please try again.",
+      rate: "Too many reviews sent, try again later.",
+      invalid: "Enter your name and pick a rating.",
+      count: "{count} reviews",
+      close: "Close",
     },
   },
 };

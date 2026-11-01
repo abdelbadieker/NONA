@@ -11,9 +11,11 @@ import { getHomeContent } from "@/lib/data/appearance";
 import { Hero } from "@/components/home/Hero";
 import { ProductRail } from "@/components/product/ProductRail";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
-import { Reviews } from "@/components/home/Reviews";
 import { Faq } from "@/components/home/Faq";
-import { faq, reviews } from "@/lib/content";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { getApprovedReviews } from "@/lib/data/reviews";
+import { storeText } from "@/i18n/store";
+import { faq } from "@/lib/content";
 
 export default async function HomePage({
   params,
@@ -26,13 +28,14 @@ export default async function HomePage({
   const dict = await getDictionary(lang);
   const base = `/${lang}`;
 
-  const [categories, featured, bestSellers, newArrivals, home] =
+  const [categories, featured, bestSellers, newArrivals, home, reviews] =
     await Promise.all([
       getCategories(),
       getFeatured(10),
       getBestSellers(10),
       getNewArrivals(10),
       getHomeContent(),
+      getApprovedReviews(null, 6),
     ]);
 
   const heroProduct = [...featured, ...bestSellers, ...newArrivals].find(
@@ -81,7 +84,13 @@ export default async function HomePage({
         href={`${base}/shop`}
       />
 
-      <Reviews title={dict.home.reviews} items={reviews[lang]} />
+      {/* Real, moderated customer reviews (no hard-coded testimonials). */}
+      <ReviewsSection
+        reviews={reviews}
+        productId={null}
+        t={{ ...storeText[lang].reviews, title: dict.home.reviews }}
+        className="mx-auto max-w-6xl px-4 py-8 sm:px-6"
+      />
       <Faq title={dict.home.faq} items={faq[lang]} />
     </>
   );

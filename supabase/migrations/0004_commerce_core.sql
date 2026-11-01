@@ -174,8 +174,14 @@ alter table public.orders
   add column if not exists cod_settled_at        timestamptz,
   add column if not exists flagged               boolean not null default false,
   add column if not exists flag_reason           text,
-  add column if not exists utm                   jsonb,
-  add column if not exists source                text;
+  -- Columns that already exist on the live database (added outside this
+  -- repo); declared here with identical definitions so fresh databases match.
+  add column if not exists status_note           text,
+  add column if not exists is_archived           boolean not null default false,
+  add column if not exists is_spam               boolean not null default false,
+  add column if not exists ad_source             text,
+  add column if not exists attribution           jsonb not null default '{}'::jsonb,
+  add column if not exists custom_fields         jsonb not null default '{}'::jsonb;
 
 alter table public.orders drop constraint if exists orders_payment_method_check;
 alter table public.orders add constraint orders_payment_method_check
@@ -197,6 +203,54 @@ create index if not exists idx_orders_customer       on public.orders(customer_i
 create index if not exists idx_orders_payment_status on public.orders(payment_status);
 create index if not exists idx_orders_flagged        on public.orders(flagged) where flagged;
 create index if not exists idx_orders_wilaya         on public.orders(wilaya_code);
+create index if not exists idx_orders_ad_source      on public.orders(ad_source);
+
+-- ----------------------------------------------------------------
+-- Phone blocklist and checkout leads (tables already exist on the live
+-- database with these exact definitions; policies move to permissions).
+-- ----------------------------------------------------------------
+create table if not exists public.blocked_phones (
+  phone      text primary key,
+  reason     text,
+  created_at timestamptz not null default now()
+);
+alter table public.blocked_phones enable row level security;
+drop policy if exists blocked_admin_all on public.blocked_phones;
+drop policy if exists blocked_phones_staff_read on public.blocked_phones;
+create policy blocked_phones_staff_read on public.blocked_phones
+  for select to authenticated using (private.has_permission(auth.uid(), 'orders.view'));
+drop policy if exists blocked_phones_staff_write on public.blocked_phones;
+create policy blocked_phones_staff_write on public.blocked_phones
+  for all to authenticated
+  using (private.has_permission(auth.uid(), 'orders.manage'))
+  with check (private.has_permission(auth.uid(), 'orders.manage'));
+
+-- A lead = a checkout started (name + valid phone) but not yet completed.
+-- One row per phone; deleted when that phone places an order.
+create table if not exists public.leads (
+  id             uuid primary key default gen_random_uuid(),
+  customer_name  text,
+  customer_phone text not null,
+  wilaya_code    int,
+  commune        text,
+  product_slug   text,
+  product_name   text,
+  locale         text default 'ar',
+  ad_source      text,
+  attribution    jsonb not null default '{}'::jsonb,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create unique index if not exists leads_phone_key on public.leads(customer_phone);
+create index if not exists idx_leads_created on public.leads(created_at desc);
+alter table public.leads enable row level security;
+drop policy if exists leads_admin_all on public.leads;
+drop policy if exists leads_staff_read on public.leads;
+create policy leads_staff_read on public.leads
+  for select to authenticated using (private.has_permission(auth.uid(), 'orders.view'));
+drop policy if exists leads_staff_write on public.leads;
+create policy leads_staff_write on public.leads
+  for delete to authenticated using (private.has_permission(auth.uid(), 'orders.manage'));
 
 alter table public.order_items
   add column if not exists sku       text,
@@ -671,6 +725,11 @@ begin
     return jsonb_build_object('ok', false, 'error', 'invalid_customer');
   end if;
 
+  -- Blocked numbers (spam / repeated refusals) can't order.
+  if exists (select 1 from public.blocked_phones where phone = v_phone) then
+    return jsonb_build_object('ok', false, 'error', 'blocked');
+  end if;
+
   -- Abuse guard: at most 5 orders per phone per hour.
   select count(*) into v_recent from public.orders
    where customer_phone = v_phone and created_at > now() - interval '1 hour';
@@ -734,7 +793,7 @@ begin
       subtotal, discount_id, discount_code, discount_amount,
       delivery_fee, delivery_fee_original, total, notes, locale,
       idempotency_key, payment_method, payment_status,
-      flagged, flag_reason, utm, source)
+      flagged, flag_reason, attribution, ad_source)
     values (
       'not_confirmed', v_customer, nullif(p->>'user_id', '')::uuid,
       v_name, v_phone, v_phone2,
@@ -746,8 +805,9 @@ begin
       (v_quote->>'total')::numeric, v_notes, v_locale,
       v_key, 'cod', 'pending',
       v_flag_reason is not null, v_flag_reason,
-      case when jsonb_typeof(p->'utm') = 'object' then p->'utm' end,
-      nullif(left(p->>'source', 40), ''))
+      (case when jsonb_typeof(p->'utm') = 'object' then p->'utm' else '{}'::jsonb end)
+        || jsonb_build_object('checkout', coalesce(nullif(left(p->>'source', 20), ''), 'storefront')),
+      nullif(left(p->>'ad_source', 40), ''))
     returning id, order_number, public_token, total into v_order;
 
     for l in select * from jsonb_array_elements(v_quote->'lines') loop
@@ -760,6 +820,9 @@ begin
         l->>'image_url', (l->>'unit_price')::numeric, (l->>'qty')::int,
         (l->>'line_total')::numeric);
     end loop;
+
+    -- The abandoned-checkout lead for this phone is now an order.
+    delete from public.leads where customer_phone = v_phone;
 
     insert into public.order_events (order_id, type, data)
     values (v_order.id, 'created', jsonb_build_object(

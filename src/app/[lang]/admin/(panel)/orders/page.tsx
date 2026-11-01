@@ -14,7 +14,18 @@ import { Badge, EmptyState, NoAccess, PageHeader, Pagination, btnSecondary, buil
 import { cn, formatPrice } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/types";
 
-type SP = { status?: string; payment?: string; flagged?: string; wilaya?: string; q?: string; from?: string; to?: string; page?: string };
+type SP = {
+  status?: string;
+  payment?: string;
+  flagged?: string;
+  wilaya?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+  page?: string;
+  view?: string;
+  source?: string;
+};
 
 export default async function AdminOrdersPage({
   params,
@@ -41,6 +52,8 @@ export default async function AdminOrdersPage({
     from: sp.from,
     to: sp.to,
     page: Number(sp.page) || 1,
+    view: sp.view === "spam" || sp.view === "archived" ? sp.view : undefined,
+    source: sp.source || undefined,
   };
 
   const [result, counts, wilayas] = await Promise.all([getOrdersPage(filters), getOrderCounts(), getAllDeliveryFees()]);
@@ -54,17 +67,22 @@ export default async function AdminOrdersPage({
     q: filters.q,
     from: filters.from,
     to: filters.to,
+    view: filters.view,
+    source: filters.source,
   };
+  const noView = { view: undefined };
 
   const tabs = [
-    { key: "all", label: t.orders.all, href: buildHref(base, { ...keep, status: undefined, flagged: undefined }), active: !status && !filters.flagged },
+    { key: "all", label: t.orders.all, href: buildHref(base, { ...keep, ...noView, status: undefined, flagged: undefined }), active: !status && !filters.flagged && !filters.view },
     ...ORDER_STATUSES.map((s) => ({
       key: s,
       label: t.status[s],
-      href: buildHref(base, { ...keep, status: s, flagged: undefined }),
-      active: status === s,
+      href: buildHref(base, { ...keep, ...noView, status: s, flagged: undefined }),
+      active: status === s && !filters.view,
     })),
-    { key: "flagged", label: ops.orders.flaggedOnly, href: buildHref(base, { ...keep, status: undefined, flagged: "1" }), active: !!filters.flagged && !status },
+    { key: "flagged", label: ops.orders.flaggedOnly, href: buildHref(base, { ...keep, ...noView, status: undefined, flagged: "1" }), active: !!filters.flagged && !status && !filters.view },
+    { key: "spam", label: ops.live.spam, href: buildHref(base, { view: "spam" }), active: filters.view === "spam" },
+    { key: "archived", label: ops.live.archived, href: buildHref(base, { view: "archived" }), active: filters.view === "archived" },
   ];
 
   return (
@@ -103,6 +121,8 @@ export default async function AdminOrdersPage({
       <form method="get" className="grid gap-2 rounded-2xl border border-line bg-white p-3 sm:grid-cols-2 lg:grid-cols-6">
         {status && <input type="hidden" name="status" value={status} />}
         {filters.flagged && <input type="hidden" name="flagged" value="1" />}
+        {filters.view && <input type="hidden" name="view" value={filters.view} />}
+        {filters.source && <input type="hidden" name="source" value={filters.source} />}
         <input name="q" defaultValue={sp.q ?? ""} placeholder={ops.orders.searchPlaceholder} aria-label={ops.common.search} className={cn(inputCls, "lg:col-span-2")} />
         <select name="payment" defaultValue={filters.payment ?? ""} aria-label={ops.orders.payment} className={inputCls}>
           <option value="">{ops.orders.payment}: {ops.common.all}</option>
@@ -165,6 +185,7 @@ export default async function AdminOrdersPage({
                       {formatPrice(Number(o.total))} {currency}
                     </span>
                     <div className="flex gap-1">
+                      {o.ad_source && o.ad_source !== "direct" && <Badge tone="blue">{o.ad_source}</Badge>}
                       {o.payment_status !== "pending" && o.payment_status !== "voided" && (
                         <Badge tone={o.payment_status === "refunded" ? "red" : "green"}>
                           {ops.orders.paymentStatus[o.payment_status]}

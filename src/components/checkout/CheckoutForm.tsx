@@ -10,6 +10,7 @@ import type { CheckoutText } from "@/i18n/checkout";
 import type { StoreText } from "@/i18n/store";
 import type { DeliveryFee } from "@/lib/types";
 import { placeOrder, quoteCart, type Quote } from "@/lib/actions/orders";
+import { captureLead } from "@/lib/actions/leads";
 import { useCart, type CartItem } from "@/lib/cart";
 import { PHONE_RE } from "@/lib/validation";
 import { trackInitiateCheckout } from "@/lib/pixel";
@@ -162,6 +163,32 @@ export function CheckoutForm({
       clearTimeout(id);
     };
   }, [quoteKey, ready, items, wilaya, deliveryType, appliedCode, lang]);
+
+  // Abandoned-checkout lead: once name + valid phone are typed (debounced,
+  // re-sent only when they change). Best-effort; deleted when she orders.
+  const leadSent = useRef("");
+  const firstLine = quoteState?.quote?.lines[0];
+  useEffect(() => {
+    const n = name.trim();
+    const p = phone.trim();
+    if (n.length < 2 || !PHONE_RE.test(p)) return;
+    const k = `${p}|${n}|${wilaya}`;
+    if (leadSent.current === k) return;
+    const id = setTimeout(() => {
+      leadSent.current = k;
+      captureLead({
+        customerName: n,
+        customerPhone: p,
+        wilayaCode: wilaya === "" ? null : wilaya,
+        commune: commune.trim(),
+        productSlug: firstLine?.slug,
+        productName: firstLine?.name,
+        locale: lang,
+        utm: readUtm(),
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(id);
+  }, [name, phone, wilaya, commune, firstLine?.slug, firstLine?.name, lang]);
 
   const quoting = !!items.length && quoteState?.key !== quoteKey;
   const quote = quoteState?.quote ?? null;

@@ -50,6 +50,7 @@ export const getCategories = unstable_cache(
 
 type CardQuery = {
   categorySlug?: string;
+  categoryId?: string;
   featured?: boolean;
   bestSeller?: boolean;
   sort?: "newest" | "price_asc" | "price_desc" | "bestselling";
@@ -65,6 +66,7 @@ export const getProductCards = unstable_cache(
     if (opts.featured) q = q.eq("is_featured", true);
     if (opts.bestSeller) q = q.eq("is_best_seller", true);
     if (opts.excludeId) q = q.neq("id", opts.excludeId);
+    if (opts.categoryId) q = q.eq("category_id", opts.categoryId);
 
     if (opts.categorySlug) {
       const { data: cat } = await supabase
@@ -104,6 +106,15 @@ export const getBestSellers = (limit = 8) =>
   getProductCards({ bestSeller: true, sort: "bestselling", limit });
 export const getNewArrivals = (limit = 8) =>
   getProductCards({ sort: "newest", limit });
+
+/** "You may also like": same category first, then best sellers, never itself. */
+export async function getRelatedProducts(productId: string, categoryId: string | null, limit = 8) {
+  const same = categoryId ? await getProductCards({ categoryId, excludeId: productId, sort: "bestselling", limit }) : [];
+  if (same.length >= limit) return same;
+  const more = await getProductCards({ excludeId: productId, sort: "bestselling", limit: limit * 2 });
+  const seen = new Set(same.map((p) => p.id));
+  return [...same, ...more.filter((p) => !seen.has(p.id))].slice(0, limit);
+}
 
 export const getProductBySlug = unstable_cache(
   async (slug: string): Promise<ProductWithRelations | null> => {

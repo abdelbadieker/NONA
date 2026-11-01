@@ -293,6 +293,32 @@ describe("create_order", () => {
     expect(c).toMatchObject({ accepts_marketing: true, marketing_consent_source: "checkout" });
   });
 
+  it("stores attribution and ad source, and converts the phone's lead", async () => {
+    await db.query("insert into leads (customer_phone, customer_name, product_slug) values ('0661000020', 'Lead', 'robe-soiree')");
+    const r = await rpc(db, "create_order", {
+      items: [{ variant_id: redM, qty: 1 }], wilaya_code: 16, source: "buy_now", ad_source: "facebook",
+      utm: { utm_source: "facebook", utm_campaign: "eid" },
+      customer: customer("0661000020"), idempotency_key: key(),
+    });
+    const o = await one<Json>(db, "select attribution, ad_source from orders where id = $1", [r.order_id]);
+    expect(o.ad_source).toBe("facebook");
+    expect(o.attribution).toMatchObject({ utm_campaign: "eid", checkout: "buy_now" });
+    const leads = await one<{ n: number }>(db, "select count(*)::int n from leads where customer_phone = '0661000020'");
+    expect(leads.n).toBe(0);
+  });
+
+  it("rejects blocked phones before writing anything", async () => {
+    await db.query("insert into blocked_phones (phone, reason) values ('0661000030', 'refused 3x')");
+    const before = await one<{ n: number }>(db, "select count(*)::int n from orders");
+    const r = await rpc(db, "create_order", {
+      items: [{ variant_id: redM, qty: 1 }], wilaya_code: 16,
+      customer: customer("0661000030"), idempotency_key: key(),
+    });
+    expect(r).toMatchObject({ ok: false, error: "blocked" });
+    const after = await one<{ n: number }>(db, "select count(*)::int n from orders");
+    expect(after.n).toBe(before.n);
+  });
+
   it("limits order spam per phone", async () => {
     for (let i = 0; i < 5; i++) {
       await rpc(db, "create_order", {
@@ -543,6 +569,28 @@ describe("row level security", () => {
     await asRole(db, "authenticated", ids.admin, async () => {
       const r = await db.query("update admins set role_key = 'support' where id = $1 returning id", [ids.analyst]);
       expect(r.rows).toHaveLength(1);
+    });
+  });
+
+  it("reviews: anon sees only approved and can't write; leads are staff-only", async () => {
+    const pid = (await one<{ id: string }>(db, "select id from products where slug = 'robe-satin'")).id;
+    await db.query(
+      `insert into reviews (product_id, customer_name, rating, body, status) values
+       ($1, 'A', 5, 'top', 'approved'), ($1, 'B', 1, 'spam', 'pending'), ($1, 'C', 2, 'no', 'rejected')`,
+      [pid],
+    );
+    await db.query("insert into leads (customer_phone, customer_name) values ('0550000099', 'Lead')");
+    await asRole(db, "anon", null, async () => {
+      expect((await db.query("select customer_name from reviews")).rows).toEqual([{ customer_name: "A" }]);
+      await expect(
+        db.query("insert into reviews (product_id, customer_name, rating) values ($1, 'X', 5)", [pid]),
+      ).rejects.toThrow(/row-level security/);
+      expect((await db.query("select id from leads")).rows).toHaveLength(0);
+    });
+    await asRole(db, "authenticated", ids.products, async () => {
+      expect((await db.query("select id from leads")).rows).toHaveLength(0); // no orders.view
+      const upd = await db.query("update reviews set status = 'approved' where customer_name = 'B' returning id");
+      expect(upd.rows).toHaveLength(1);
     });
   });
 

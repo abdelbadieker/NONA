@@ -84,9 +84,24 @@ export default async function AdminDashboard({
             <Stat label={ops.dashboard.codToCollect} value={money(d.codToCollect)} href={`${base}/orders?payment=collected`} />
             <Stat label={ops.dashboard.newCustomers} value={d.newCustomers} />
             <Stat label={ops.dashboard.returningCustomers} value={d.returningCustomers} />
+            <Stat label={ops.live.sessions} value={d.sessions} hint={`${ops.live.pageViews}: ${d.pageViews}`} />
+            <Stat label={ops.live.conversion} value={pct(d.conversion)} />
+            <Stat label={ops.live.leads} value={d.leads} href={`${base}/leads`} />
           </div>
 
-          {!marketing.ga4Id && (
+          {d.bySource.length > 0 && (
+            <Card title={ops.live.bySource}>
+              <div className="flex flex-wrap gap-2">
+                {d.bySource.map(([src, n]) => (
+                  <Link key={src} href={`${base}/orders?source=${src}`} className="rounded-full border border-line px-3 py-1 text-sm hover:bg-cream">
+                    {src === "unknown" ? ops.live.unknown : src}: <strong>{n}</strong>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {!marketing.ga4Id && d.pageViews === 0 && (
             <p className="flex items-center gap-2 rounded-xl border border-dashed border-line bg-white px-4 py-3 text-sm text-muted">
               <Info className="size-4 shrink-0" aria-hidden />
               {ops.dashboard.trafficNote}
@@ -102,7 +117,8 @@ export default async function AdminDashboard({
               <li>Confirmation rate = orders that reached confirmation ÷ orders no longer awaiting confirmation.</li>
               <li>Delivery success = delivered ÷ (delivered + returned). Return rate = returned ÷ (delivered + returned).</li>
               <li>Held by carrier = Σ COD amounts marked collected but not yet paid out (all time).</li>
-              <li>Source: orders / order_items / customers tables. No estimates; empty = no data.</li>
+              <li>Visits = distinct first-party session ids in page views (/api/track); conversion = orders ÷ visits. Spam orders are excluded everywhere.</li>
+              <li>Source: orders / order_items / customers / analytics tables. No estimates; empty = no data.</li>
             </ul>
           </details>
         </>

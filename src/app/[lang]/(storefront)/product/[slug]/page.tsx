@@ -5,8 +5,11 @@ import { ArrowLeft, ArrowRight, RefreshCw, Truck } from "lucide-react";
 import { isLocale, locales, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { storeText } from "@/i18n/store";
-import { getProductBySlug } from "@/lib/data/catalog";
+import { getProductBySlug, getRelatedProducts } from "@/lib/data/catalog";
+import { getApprovedReviews, reviewStats } from "@/lib/data/reviews";
 import { ProductView } from "@/components/product/ProductView";
+import { ProductRail } from "@/components/product/ProductRail";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { ViewContentTracker } from "@/components/marketing/Trackers";
 import { SITE_URL } from "@/lib/site";
 import { pickLocale } from "@/lib/utils";
@@ -46,8 +49,13 @@ export default async function ProductPage({
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const dict = await getDictionary(lang);
+  const [dict, reviews, related] = await Promise.all([
+    getDictionary(lang),
+    getApprovedReviews(product.id),
+    getRelatedProducts(product.id, product.category_id),
+  ]);
   const st = storeText[lang];
+  const stats = reviewStats(reviews);
   const name = pickLocale(product, "name", lang);
   const description = pickLocale(product, "description", lang);
   const images = product.images.map((i) => ({
@@ -77,6 +85,9 @@ export default async function ProductPage({
     image: product.images.map((i) => i.url),
     sku: product.id,
     brand: { "@type": "Brand", name: product.vendor || "NONA" },
+    ...(stats
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: stats.average, reviewCount: stats.count } }
+      : {}),
     offers: {
       "@type": "AggregateOffer",
       lowPrice: prices.length ? Math.min(...prices) : product.price,
@@ -157,6 +168,11 @@ export default async function ProductPage({
           </details>
         )}
       </ProductView>
+
+      <ReviewsSection reviews={reviews} productId={product.id} t={st.reviews} className="mt-10" />
+      <div className="-mx-4 sm:-mx-6">
+        <ProductRail title={st.product.related} products={related} lang={lang} dict={dict} />
+      </div>
     </div>
   );
 }

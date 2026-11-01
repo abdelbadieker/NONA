@@ -11,6 +11,7 @@ import { getActiveReasons } from "@/lib/data/admin";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { OrderStatusControl } from "@/components/admin/OrderStatusControl";
 import { CallLogger, CodPanel, DetailsEditor, FlagAndAssign, NoteForm, ShipmentForm } from "@/components/admin/OrderPanels";
+import { OrderSpamArchive } from "@/components/admin/LiveOps";
 import { Badge, Card, NoAccess, PageHeader, fmtDate } from "@/components/admin/ui";
 import { formatPrice, pickLocale } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/types";
@@ -54,7 +55,8 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ l
 
   const o = order as Record<string, unknown>;
   const str = (k: string) => (o[k] == null ? "" : String(o[k]));
-  const utm = (o.utm ?? null) as Record<string, string> | null;
+  const attribution = Object.entries((o.attribution ?? {}) as Record<string, unknown>).filter(([, v]) => v != null && v !== "");
+  const customFields = Object.entries((o.custom_fields ?? {}) as Record<string, unknown>).filter(([, v]) => v != null && v !== "");
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -64,6 +66,8 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ l
         subtitle={fmtDate(order.created_at, true)}
         actions={
           <>
+            {Boolean(o.is_spam) && <Badge tone="red">{ops.live.spam}</Badge>}
+            {Boolean(o.is_archived) && <Badge>{ops.live.archived}</Badge>}
             <Badge tone={["collected", "settled"].includes(str("payment_status")) ? "green" : str("payment_status") === "refunded" ? "red" : "neutral"}>
               {ops.orders.paymentStatus[str("payment_status")] ?? str("payment_status")}
             </Badge>
@@ -277,12 +281,23 @@ export default async function AdminOrderDetail({ params }: { params: Promise<{ l
             </Card>
           )}
 
-          {(utm || Boolean(o.source)) && (
-            <Card title={ops.orders.source}>
+          {canManage && (
+            <Card title={`${ops.live.spam} / ${ops.live.archived}`}>
+              <OrderSpamArchive orderId={order.id} lang={lang} ops={ops} isSpam={Boolean(o.is_spam)} isArchived={Boolean(o.is_archived)} />
+            </Card>
+          )}
+
+          {(attribution.length > 0 || Boolean(o.ad_source) || Boolean(o.status_note) || customFields.length > 0) && (
+            <Card title={ops.live.attribution}>
               <dl className="text-xs">
-                {Boolean(o.source) && <Row label="source" value={str("source")} ltr />}
-                {utm &&
-                  Object.entries(utm).map(([k, v]) => <Row key={k} label={k} value={v} ltr />)}
+                {Boolean(o.ad_source) && <Row label={ops.live.adSource} value={str("ad_source")} ltr />}
+                {attribution.map(([k, v]) => (
+                  <Row key={k} label={k} value={String(v)} ltr />
+                ))}
+                {Boolean(o.status_note) && <Row label={ops.live.statusNote} value={str("status_note")} />}
+                {customFields.map(([k, v]) => (
+                  <Row key={k} label={`${ops.live.customFields}: ${k}`} value={typeof v === "object" ? JSON.stringify(v) : String(v)} />
+                ))}
               </dl>
             </Card>
           )}

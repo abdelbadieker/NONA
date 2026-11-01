@@ -74,6 +74,37 @@ insert into public.pages (slug, title_ar, title_fr, title_en, body_ar, body_fr, 
 on conflict (slug) do nothing;
 
 -- ----------------------------------------------------------------
+-- Product reviews (table already exists on the live database with this
+-- exact definition). Customers submit through a rate-limited server action
+-- (status 'pending'); only approved reviews are public.
+-- ----------------------------------------------------------------
+create table if not exists public.reviews (
+  id            uuid primary key default gen_random_uuid(),
+  product_id    uuid references public.products(id) on delete cascade,
+  customer_name text not null,
+  rating        int not null check (rating between 1 and 5),
+  body          text,
+  status        text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at    timestamptz not null default now()
+);
+create index if not exists idx_reviews_product on public.reviews(product_id);
+create index if not exists idx_reviews_status on public.reviews(status);
+alter table public.reviews enable row level security;
+
+drop policy if exists reviews_select_public on public.reviews;
+create policy reviews_select_public on public.reviews
+  for select to anon, authenticated using (status = 'approved');
+drop policy if exists reviews_admin_all on public.reviews;
+drop policy if exists reviews_staff_read on public.reviews;
+create policy reviews_staff_read on public.reviews
+  for select to authenticated using (private.is_admin(auth.uid()));
+drop policy if exists reviews_staff_write on public.reviews;
+create policy reviews_staff_write on public.reviews
+  for all to authenticated
+  using (private.has_permission(auth.uid(), 'products.manage'))
+  with check (private.has_permission(auth.uid(), 'products.manage'));
+
+-- ----------------------------------------------------------------
 -- Form submissions (contact, wholesale). Inserted by server code only.
 -- ----------------------------------------------------------------
 create table if not exists public.form_submissions (

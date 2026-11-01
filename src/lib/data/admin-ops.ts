@@ -32,6 +32,9 @@ export type OrderFilters = {
   status?: OrderStatus;
   payment?: string;
   flagged?: boolean;
+  /** Default lists hide archived and spam orders; these show only them. */
+  view?: "spam" | "archived";
+  source?: string;
   wilaya?: number;
   q?: string;
   from?: string;
@@ -50,13 +53,25 @@ export type OrderListRow = Pick<
   | "total"
   | "status"
   | "created_at"
-> & { payment_status: string; flagged: boolean; call_attempts: number; last_call_outcome: string | null };
+> & {
+  payment_status: string;
+  flagged: boolean;
+  call_attempts: number;
+  last_call_outcome: string | null;
+  ad_source: string | null;
+  is_spam: boolean;
+  is_archived: boolean;
+};
 
 const ORDER_LIST_FIELDS =
-  "id, order_number, customer_name, customer_phone, wilaya_name, delivery_type, total, status, created_at, payment_status, flagged, call_attempts, last_call_outcome";
+  "id, order_number, customer_name, customer_phone, wilaya_name, delivery_type, total, status, created_at, payment_status, flagged, call_attempts, last_call_outcome, ad_source, is_spam, is_archived";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applyOrderFilters(q: any, f: OrderFilters) {
+  if (f.view === "spam") q = q.eq("is_spam", true);
+  else if (f.view === "archived") q = q.eq("is_archived", true).eq("is_spam", false);
+  else q = q.eq("is_spam", false).eq("is_archived", false);
+  if (f.source && /^[a-z]{2,20}$/.test(f.source)) q = q.eq("ad_source", f.source);
   if (f.status && ORDER_STATUSES.includes(f.status)) q = q.eq("status", f.status);
   if (f.payment) q = q.eq("payment_status", f.payment);
   if (f.flagged) q = q.eq("flagged", true);
@@ -96,14 +111,21 @@ export async function getOrdersForExport(f: OrderFilters) {
 
 export async function getOrderCounts(): Promise<Record<string, number>> {
   const supabase = await createClient();
+  const active = () =>
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_spam", false).eq("is_archived", false);
   const results = await Promise.all([
-    supabase.from("orders").select("id", { count: "exact", head: true }),
-    ...ORDER_STATUSES.map((s) => supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", s)),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("flagged", true),
+    active(),
+    ...ORDER_STATUSES.map((s) => active().eq("status", s)),
+    active().eq("flagged", true),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_spam", true),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_archived", true).eq("is_spam", false),
   ]);
   const counts: Record<string, number> = { all: results[0].count ?? 0 };
   ORDER_STATUSES.forEach((s, i) => (counts[s] = results[i + 1].count ?? 0));
-  counts.flagged = results[ORDER_STATUSES.length + 1].count ?? 0;
+  const n = ORDER_STATUSES.length;
+  counts.flagged = results[n + 1].count ?? 0;
+  counts.spam = results[n + 2].count ?? 0;
+  counts.archived = results[n + 3].count ?? 0;
   return counts;
 }
 
@@ -413,29 +435,80 @@ export async function getAuditPage(f: { q?: string; status?: string; page?: numb
   return paged(data as Record<string, unknown>[] | null, count, page);
 }
 
+// ── Leads, blocklist, reviews ────────────────────────────
+
+export type LeadRow = {
+  id: string;
+  customer_name: string | null;
+  customer_phone: string;
+  wilaya_code: number | null;
+  commune: string | null;
+  product_slug: string | null;
+  product_name: string | null;
+  locale: string | null;
+  ad_source: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getLeadsPage(f: { q?: string; page?: number }) {
+  const supabase = await createClient();
+  const { page, from, to } = pageRange(f.page ?? 1);
+  let q = supabase.from("leads").select("*", { count: "exact" });
+  const term = cleanSearch(f.q);
+  if (term) q = /^0?\d+$/.test(term) ? q.like("customer_phone", `${term}%`) : q.ilike("customer_name", `%${term}%`);
+  const { data, count } = await q.order("updated_at", { ascending: false }).range(from, to);
+  return paged(data as LeadRow[] | null, count, page);
+}
+
+export async function getBlockedPhones() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("blocked_phones").select("*").order("created_at", { ascending: false }).limit(500);
+  return (data as { phone: string; reason: string | null; created_at: string }[] | null) ?? [];
+}
+
+export async function getReviewsPage(f: { status?: string; page?: number }) {
+  const supabase = await createClient();
+  const { page, from, to } = pageRange(f.page ?? 1);
+  const status = ["pending", "approved", "rejected"].includes(f.status ?? "") ? f.status! : "pending";
+  const { data, count } = await supabase
+    .from("reviews")
+    .select("id, customer_name, rating, body, status, created_at, product:products(name_ar, name_fr, name_en, slug)", { count: "exact" })
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+  const pending = await supabase.from("reviews").select("id", { count: "exact", head: true }).eq("status", "pending");
+  return { ...paged(data as Record<string, unknown>[] | null, count, page), status, pending: pending.count ?? 0 };
+}
+
 // ── Dashboard ────────────────────────────────────────────
 
 export async function getDashboard(days: number) {
   const supabase = await createClient();
   const start = rangeStart(days).toISOString();
 
-  const [ordersRes, pendingRes, flaggedRes, transitRes, collectedRes, newCust, lowStock, recentRes] = await Promise.all([
+  // Spam orders never count in metrics.
+  const [ordersRes, pendingRes, flaggedRes, transitRes, collectedRes, newCust, lowStock, recentRes, viewsRes, leadsRes] = await Promise.all([
     supabase
       .from("orders")
-      .select("id, status, subtotal, discount_amount, total, created_at, customer_id")
+      .select("id, status, subtotal, discount_amount, total, created_at, customer_id, ad_source")
+      .eq("is_spam", false)
       .gte("created_at", start)
       .limit(20000),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "not_confirmed"),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("flagged", true).in("status", ["not_confirmed", "confirmed"]),
-    supabase.from("orders").select("total").eq("status", "in_delivery").limit(20000),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "not_confirmed").eq("is_spam", false).eq("is_archived", false),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("flagged", true).eq("is_spam", false).in("status", ["not_confirmed", "confirmed"]),
+    supabase.from("orders").select("total").eq("status", "in_delivery").eq("is_spam", false).limit(20000),
     supabase.from("orders").select("cod_collected_amount").eq("payment_status", "collected").limit(20000),
     supabase.from("customers").select("id", { count: "exact", head: true }).gte("first_order_at", start),
     getLowStock(6),
     supabase
       .from("orders")
       .select("id, order_number, customer_name, wilaya_name, total, status, created_at")
+      .eq("is_spam", false)
       .order("created_at", { ascending: false })
       .limit(8),
+    supabase.from("analytics").select("session_id").eq("event_type", "page_view").gte("created_at", start).limit(50000),
+    supabase.from("leads").select("id", { count: "exact", head: true }).gte("updated_at", start),
   ]);
 
   const orders = (ordersRes.data as (MetricOrder & { id: string; customer_id: string | null })[] | null) ?? [];
@@ -475,8 +548,22 @@ export async function getDashboard(days: number) {
   const sum = (rows: Record<string, unknown>[] | null, k: string) =>
     (rows ?? []).reduce((s, r) => s + (Number(r[k]) || 0), 0);
 
+  // First-party traffic: page views and distinct sessions (from /api/track).
+  const views = (viewsRes.data as { session_id: string | null }[] | null) ?? [];
+  const sessions = new Set(views.map((v) => v.session_id).filter(Boolean)).size;
+  const bySource = new Map<string, number>();
+  for (const o of orders as (MetricOrder & { ad_source?: string | null })[]) {
+    const k = o.ad_source || "unknown";
+    bySource.set(k, (bySource.get(k) ?? 0) + 1);
+  }
+
   return {
     metrics,
+    pageViews: views.length,
+    sessions,
+    conversion: sessions > 0 ? metrics.orders / sessions : null,
+    leads: leadsRes.count ?? 0,
+    bySource: [...bySource.entries()].sort((a, b) => b[1] - a[1]),
     awaiting: pendingRes.count ?? 0,
     flagged: flaggedRes.count ?? 0,
     codInTransit: sum(transitRes.data as Record<string, unknown>[] | null, "total"),

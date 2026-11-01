@@ -1,25 +1,7 @@
 import type { Locale } from "@/i18n/config";
 
-export const reviews: Record<
-  Locale,
-  { name: string; text: string; rating: number }[]
-> = {
-  ar: [
-    { name: "أمينة", text: "جودة ممتازة والتوصيل كان سريع. سأطلب مرة أخرى أكيد!", rating: 5 },
-    { name: "سارة", text: "المقاس مظبوط والقماش راقي. شكراً نونة 💕", rating: 5 },
-    { name: "ياسمين", text: "خدمة محترمة وتأكيد الطلب بالهاتف طمّنني. أنصح بها.", rating: 5 },
-  ],
-  fr: [
-    { name: "Amina", text: "Excellente qualité et livraison rapide. Je recommande !", rating: 5 },
-    { name: "Sarah", text: "La taille est parfaite et le tissu élégant. Merci NONA 💕", rating: 5 },
-    { name: "Yasmine", text: "Service sérieux, la confirmation par téléphone m'a rassurée.", rating: 5 },
-  ],
-  en: [
-    { name: "Amina", text: "Great quality and fast delivery. Will definitely order again!", rating: 5 },
-    { name: "Sarah", text: "Perfect fit and elegant fabric. Thank you NONA 💕", rating: 5 },
-    { name: "Yasmine", text: "Serious service — the phone confirmation reassured me.", rating: 5 },
-  ],
-};
+// Customer reviews now come from the `reviews` table (moderated); the former
+// hard-coded testimonials were removed because they weren't real customers.
 
 export const faq: Record<Locale, { q: string; a: string }[]> = {
   ar: [
