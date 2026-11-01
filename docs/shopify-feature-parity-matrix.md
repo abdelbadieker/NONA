@@ -13,7 +13,20 @@ _Updated 2026-10-29. Statuses are evidence-based. A page, table or button existi
 | **BLOCKED** | Blocked by an external provider or missing credentials |
 | **N/A** | Not applicable |
 
-**Global prerequisite:** every UNVERIFIED item becomes verifiable once migrations `0003`–`0005` are applied to a non-production (or the production) Supabase database. Next step: run the smoke-test checklist in `testing-and-release.md` §5.
+**Status update 2026-11-01:** migrations `0003`–`0005` are applied to the live database, and the core order flow (pricing, creation, confirm/cancel stock, attribution, lifecycle rules, public RLS) is **VERIFIED on the live DB** inside a rolled-back transaction. UI items stay UNVERIFIED until the code is deployed to production and the smoke test (`testing-and-release.md` §5) is run.
+
+### Live-site features rebuilt (their code wasn't recoverable)
+
+| Capability | Status | Files |
+| --- | --- | --- |
+| Product reviews (submit → pending → moderate → public), homepage + product page, `aggregateRating` | UNVERIFIED (RLS VERIFIED in DB tests) | `actions/reviews.ts`, `components/reviews/*`, `admin/reviews` |
+| Abandoned-checkout leads (name + phone, upsert per phone, deleted on order, 30-day retention) | UNVERIFIED (DB rule VERIFIED) | `actions/leads.ts`, `CheckoutForm.tsx`, `admin/leads` |
+| Phone blocklist (orders rejected with a generic error) | UNVERIFIED (DB rule VERIFIED) | `create_order`, `admin/leads`, order page "Block this number" |
+| Order spam / archive (hidden from lists, spam excluded from metrics) | UNVERIFIED | `actions/orders.ts`, orders list tabs |
+| Ad attribution (`attribution`, `ad_source`) + orders-by-source | VERIFIED on live DB (storage) | `lib/attribution.ts` (unit-tested), `UtmCapture.tsx` |
+| First-party page views → visits & conversion on dashboard | UNVERIFIED | `api/track`, `PageViewTracker.tsx` |
+| Related products ("قد يعجبكِ أيضًا") | UNVERIFIED | `getRelatedProducts` |
+| Fabricated homepage testimonials | Removed | replaced by real approved reviews |
 
 **Test references:** "DB:" = `tests/db/commerce.test.ts` (real Postgres 17 via PGlite), "Unit:" = `tests/unit/*.test.ts`.
 
