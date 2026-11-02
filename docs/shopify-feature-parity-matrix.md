@@ -13,7 +13,7 @@ _Updated 2026-10-29. Statuses are evidence-based. A page, table or button existi
 | **BLOCKED** | Blocked by an external provider or missing credentials |
 | **N/A** | Not applicable |
 
-**Status update 2026-11-01:** migrations `0003`–`0005` are applied to the live database, and the core order flow (pricing, creation, confirm/cancel stock, attribution, lifecycle rules, public RLS) is **VERIFIED on the live DB** inside a rolled-back transaction. UI items stay UNVERIFIED until the code is deployed to production and the smoke test (`testing-and-release.md` §5) is run.
+**Status update 2026-11-01:** migrations `0003`–`0005` are applied to the live database, and the core order flow (pricing, creation, confirm/cancel stock, attribution, lifecycle rules, public RLS) is **VERIFIED on the live DB** inside a rolled-back transaction. **Deployed to production 2026-11-02.** On the live site, **VERIFIED:** cart pricing, checkout totals with delivery fee, discount-code validation, page-view beacon, new storefront routes, reviews section and related-products rail render. Admin screens and order submission stay UNVERIFIED until the owner runs the smoke test (`testing-and-release.md` §5) with their login.
 
 ### Live-site features rebuilt (their code wasn't recoverable)
 
