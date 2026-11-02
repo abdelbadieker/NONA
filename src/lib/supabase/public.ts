@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { supabaseAnonKey, supabaseUrl } from "./env";
 
 /**
  * Cookie-free anon client for PUBLIC reads (active catalog, public settings).
@@ -9,8 +10,8 @@ import type { Database } from "./types";
  */
 export function createPublicClient() {
   return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim(),
+    supabaseUrl(),
+    supabaseAnonKey(),
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 }

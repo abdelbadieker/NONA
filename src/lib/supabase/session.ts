@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseAnonKey, supabaseUrl } from "./env";
 
 /**
  * Refreshes the Supabase auth session in the proxy and writes refreshed
@@ -15,8 +16,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   if (!hasAuthCookie) return response;
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim(),
+    supabaseUrl(),
+    supabaseAnonKey(),
     {
       cookies: {
         getAll() {
