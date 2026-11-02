@@ -594,6 +594,28 @@ describe("row level security", () => {
     });
   });
 
+  it("landing pages: anon sees published pages only, never preview tokens, and can't write", async () => {
+    await db.query(`insert into landing_pages (slug, title, status, blocks) values
+      ('lp-live', 'Live', 'published', '[{"id":"f","type":"form"}]'),
+      ('lp-draft', 'Draft', 'draft', '[{"id":"f","type":"form"}]')`);
+    await asRole(db, "anon", null, async () => {
+      const r = await db.query<{ slug: string }>("select slug, title, blocks from landing_pages");
+      expect(r.rows.map((x) => x.slug)).toEqual(["lp-live"]);
+      await expect(db.query("select preview_token from landing_pages")).rejects.toThrow(/permission denied/);
+      const upd = await db.query("update landing_pages set status = 'published' returning slug");
+      expect(upd.rows).toHaveLength(0); // RLS: no policy lets anon write
+    });
+    await asRole(db, "authenticated", ids.products, async () => {
+      // product_manager has content.manage
+      const upd = await db.query("update landing_pages set title = 'Edited' where slug = 'lp-draft' returning id");
+      expect(upd.rows).toHaveLength(1);
+    });
+    await asRole(db, "authenticated", ids.fulfillment, async () => {
+      const upd = await db.query("update landing_pages set title = 'Nope' returning id");
+      expect(upd.rows).toHaveLength(0);
+    });
+  });
+
   it("legacy inserts that only set `role` still get a role_key", async () => {
     const u = await createUser(db, "legacy@test.dz");
     await db.query("insert into admins (id, email, role) values ($1, 'legacy@test.dz', 'admin')", [u]);

@@ -59,3 +59,22 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Landing-page call to action: gentle "breathing" pulse. */
+@keyframes nona-cta {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+.animate-cta {
+  animation: nona-cta 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-cta {
+    animation: none;
+  }
+}

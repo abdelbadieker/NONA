@@ -124,6 +124,7 @@ export type StoreText = {
     count: string;
     close: string;
   };
+  landing: { previewOnly: string; draftBanner: string };
 };
 
 const statusAr: Record<OrderStatus, string> = {
@@ -284,6 +285,10 @@ export const storeText: Record<Locale, StoreText> = {
       count: "{count} تقييم",
       close: "إغلاق",
     },
+    landing: {
+      previewOnly: "هذه معاينة لمسودة — الطلب غير مفعّل قبل النشر.",
+      draftBanner: "معاينة مسودة — غير منشورة",
+    },
   },
   fr: {
     nav: { cart: "Panier", track: "Suivre ma commande" },
@@ -417,6 +422,10 @@ export const storeText: Record<Locale, StoreText> = {
       count: "{count} avis",
       close: "Fermer",
     },
+    landing: {
+      previewOnly: "Aperçu d'un brouillon — la commande est désactivée avant publication.",
+      draftBanner: "Aperçu du brouillon — non publié",
+    },
   },
   en: {
     nav: { cart: "Cart", track: "Track order" },
@@ -549,6 +558,10 @@ export const storeText: Record<Locale, StoreText> = {
       invalid: "Enter your name and pick a rating.",
       count: "{count} reviews",
       close: "Close",
+    },
+    landing: {
+      previewOnly: "This is a draft preview — ordering is disabled until it's published.",
+      draftBanner: "Draft preview — not published",
     },
   },
 };

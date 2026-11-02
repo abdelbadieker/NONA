@@ -10,8 +10,10 @@ import {
   FileText,
   Inbox,
   LayoutDashboard,
+  LayoutTemplate,
   ListX,
   LogOut,
+  Megaphone,
   Menu,
   Package,
   Palette,
@@ -31,6 +33,7 @@ import {
 import type { Locale } from "@/i18n/config";
 import type { AdminText } from "@/i18n/admin";
 import type { AdminOpsText } from "@/i18n/admin-ops";
+import type { AdminBuilderText } from "@/i18n/admin-builder";
 import { can, type Permission } from "@/lib/permissions";
 import { signOut } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
@@ -38,7 +41,13 @@ import { cn } from "@/lib/utils";
 type NavItem = { href: string; label: string; icon: LucideIcon; perm: Permission; exact?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 
-function buildNav(base: string, nav: AdminText["nav"], ops: AdminOpsText["nav"], live: AdminOpsText["live"]): NavGroup[] {
+function buildNav(
+  base: string,
+  nav: AdminText["nav"],
+  ops: AdminOpsText["nav"],
+  live: AdminOpsText["live"],
+  builder: AdminBuilderText["nav"],
+): NavGroup[] {
   return [
     {
       label: ops.groups.sales,
@@ -66,6 +75,8 @@ function buildNav(base: string, nav: AdminText["nav"], ops: AdminOpsText["nav"],
     {
       label: ops.groups.marketing,
       items: [
+        { href: `${base}/landing`, label: builder.landing, icon: Megaphone, perm: "content.manage" },
+        { href: `${base}/builder`, label: builder.builder, icon: LayoutTemplate, perm: "content.manage" },
         { href: `${base}/discounts`, label: ops.discounts, icon: BadgePercent, perm: "discounts.manage" },
         { href: `${base}/content`, label: ops.content, icon: FileText, perm: "content.manage" },
         { href: `${base}/appearance`, label: nav.appearance, icon: Palette, perm: "content.manage" },
@@ -188,6 +199,7 @@ export function AdminShell({
   nav,
   ops,
   live,
+  builder,
   adminName,
   roleLabel,
   permissions,
@@ -197,6 +209,7 @@ export function AdminShell({
   nav: AdminText["nav"];
   ops: AdminOpsText["nav"];
   live: AdminOpsText["live"];
+  builder: AdminBuilderText["nav"];
   adminName: string;
   roleLabel: string;
   permissions: string[];
@@ -207,7 +220,7 @@ export function AdminShell({
   const [collapsed, setCollapsed] = useState(false);
   const base = `/${lang}/admin`;
 
-  const groups = buildNav(base, nav, ops, live)
+  const groups = buildNav(base, nav, ops, live, builder)
     .map((g) => ({ ...g, items: g.items.filter((it) => can(permissions, it.perm)) }))
     .filter((g) => g.items.length);
 

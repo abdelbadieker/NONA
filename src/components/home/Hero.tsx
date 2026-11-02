@@ -13,12 +13,18 @@ export function Hero({
   product,
   content,
   heroImage,
+  ctaHref,
+  plain = false,
 }: {
   lang: Locale;
   dict: Dictionary;
   product?: ProductCardData;
   content?: HeroLocale;
   heroImage?: string;
+  /** Main button target (defaults to the shop). */
+  ctaHref?: string;
+  /** No built-in gradient (a section background colour is used instead). */
+  plain?: boolean;
 }) {
   const base = `/${lang}`;
   const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
@@ -34,7 +40,7 @@ export function Hero({
   const imgHref = useProduct ? `${base}/product/${product!.slug}` : `${base}/shop`;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-blush-light via-cream to-white">
+    <section className={plain ? "relative overflow-hidden" : "relative overflow-hidden bg-gradient-to-br from-blush-light via-cream to-white"}>
       <div className="pointer-events-none absolute -end-20 -top-20 size-72 rounded-full bg-blush/40 blur-3xl" />
       <div className="pointer-events-none absolute -start-24 bottom-0 size-80 rounded-full bg-gold/20 blur-3xl" />
 
@@ -52,7 +58,7 @@ export function Hero({
           </p>
           <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row md:items-start">
             <Link
-              href={`${base}/shop`}
+              href={ctaHref || `${base}/shop`}
               className="flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-ink/20 transition-transform hover:scale-[1.03] sm:w-auto"
             >
               <ShoppingBag className="size-5" aria-hidden />

@@ -26,7 +26,7 @@ export const cartItemSchema = z.object({
 
 const utmSchema = z
   .record(
-    z.string().regex(/^(utm_(source|medium|campaign|content|term)|fbclid|ttclid|gclid|referrer|landing)$/),
+    z.string().regex(/^(utm_(source|medium|campaign|content|term)|fbclid|ttclid|gclid|referrer|landing|lp)$/),
     z.string().max(300),
   )
   .optional();

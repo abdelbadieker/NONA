@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { adminText } from "@/i18n/admin";
 import { adminOpsText } from "@/i18n/admin-ops";
+import { adminBuilderText } from "@/i18n/admin-builder";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { pickLocale } from "@/lib/utils";
@@ -34,6 +35,7 @@ export default async function AdminPanelLayout({
       nav={adminText[lang].nav}
       ops={adminOpsText[lang].nav}
       live={adminOpsText[lang].live}
+      builder={adminBuilderText[lang].nav}
       adminName={staff.fullName ?? staff.email ?? ""}
       roleLabel={role ? pickLocale(role, "name", lang) : staff.roleKey}
       permissions={staff.permissions}

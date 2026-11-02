@@ -367,11 +367,11 @@ export async function getProductOptions() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("id, name_ar, name_fr, name_en")
+    .select("id, name_ar, name_fr, name_en, price")
     .neq("status", "archived")
     .order("name_ar")
     .limit(500);
-  return (data as { id: string; name_ar: string; name_fr: string | null; name_en: string | null }[] | null) ?? [];
+  return (data as { id: string; name_ar: string; name_fr: string | null; name_en: string | null; price: number }[] | null) ?? [];
 }
 
 export async function getAllCategories() {
