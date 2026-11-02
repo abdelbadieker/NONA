@@ -1,6 +1,6 @@
 # Shopify feature-parity matrix — NONA
 
-_Updated 2026-10-29. Statuses are evidence-based. A page, table or button existing does **not** make a feature "verified"._
+_Updated 2026-11-02. Statuses are evidence-based. A page, table or button existing does **not** make a feature "verified"._
 
 **Status legend**
 
@@ -94,15 +94,17 @@ _Updated 2026-10-29. Statuses are evidence-based. A page, table or button existi
 | --- | --- | --- | --- |
 | Brand colours, hero image + texts per language, announcement bar | UNVERIFIED (existed; now validated) | `AppearanceForm.tsx`, `saveAppearance` | — |
 | Fonts, spacing, header/footer layout, product-card settings | MISSING | — | — |
-| Section-based page builder, templates, versions/rollback | MISSING | — | Largest remaining module; see roadmap Stage 4 |
+| Homepage section builder: 9 section types, reorder, show/hide, duplicate, per-section colours, texts per language, draft → preview → publish | UNVERIFIED (schemas unit-tested) | `admin/builder`, `HomeBuilder.tsx`, `SectionsRenderer.tsx`, `lib/sections.ts`, `actions/builder.ts` | Up/down buttons rather than drag-and-drop; homepage only |
+| Templates, version history / rollback, builder for other page types | MISSING | — | See roadmap Stage 4 |
 
 ## D — Landing pages / campaigns
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Campaign landing pages | PARTIAL | CMS pages (`/pages/[slug]`) give text pages with SEO and drafts. No product/collection blocks, CTA sections or lead forms per page. |
+| Product landing pages for ads (`/{lang}/lp/{slug}`): uploaded image blocks, text blocks, movable order form, button colour/size/shape/text, field toggles, sticky CTA, draft/private preview/publish, duplicate | UNVERIFIED (table and RLS VERIFIED on live DB; schemas unit-tested) | `admin/landing`, `LandingEditor.tsx`, `lp/[slug]/page.tsx`, `LandingOrderForm.tsx`, migration `0006`. Orders go through `create_order` with `source = landing` and `attribution.lp`. Leads are captured. |
+| CMS text pages | VERIFIED (existing) | `/pages/[slug]` with SEO and drafts |
 | UTM capture → order attribution | UNVERIFIED | `UtmCapture.tsx` → `orders.utm`; shown on the order page. |
-| Campaign reporting | MISSING | — |
+| Campaign reporting | PARTIAL | Per landing page: 30-day visits, orders and conversion on the landing list. Orders by `ad_source` on the dashboard. No ad-spend/ROAS. |
 
 ## E — Content & SEO
 

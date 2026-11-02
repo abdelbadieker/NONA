@@ -20,8 +20,8 @@ Done: order list and filters, COD confirmation workflow, shipment and failed del
 Remaining: order editing with re-pricing, packing slips and invoices, carrier API adapters (blocked on credentials), bulk order actions such as "mark shipped", dispatch manifest formatted per carrier.
 
 ## Stage 4 — Storefront & content ⏳
-Done: CMS pages, FAQ, shipping, contact, newsletter, sitemap with hreflang, product SEO.
-Next: menu and footer editor, redirects manager, section-based page builder for the homepage and landing pages (templates, draft/preview/publish, version history), faceted shop filters (size, colour, price), media library.
+Done: CMS pages, FAQ, shipping, contact, newsletter, sitemap with hreflang, product SEO, homepage section builder (draft/preview/publish), product landing pages for ads with a configurable order form (migration `0006`, deployed 2026-11-02).
+Next: menu and footer editor, redirects manager, builder templates and version history, drag-and-drop ordering, faceted shop filters (size, colour, price), media library.
 
 ## Stage 5 — Customer growth ⏳
 Done: CRM records and segments, consent capture and revocation, discounts, forms inbox, UTM attribution.

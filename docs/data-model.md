@@ -24,11 +24,12 @@ Source of truth: `supabase/migrations/*.sql`. Migrations are additive and idempo
 | `order_events` | Timeline | `type` (`created`/`status`/`note`/`call`/`delivery_attempt`/`payment`/`shipment`/`edit`/`flag`/`assignment`/`system`), `data`, `actor_id` |
 | `discounts` | Codes & automatic | `kind` (`percentage`/`fixed`/`free_shipping`), `value`, `min_subtotal`, `min_quantity`, `applies_to` + `product_ids/category_ids`, `starts_at/ends_at`, `usage_limit/usage_count`, `once_per_customer`, `automatic`, `is_active`. Code XOR automatic. |
 | `delivery_fees` | 58 wilayas | `home_fee`, `stopdesk_fee`, `is_active`, `home_enabled`, `stopdesk_enabled` |
-| `settings` | Key/value | public: `store`, `social`, `theme`, `home`, `marketing`, `delivery`; private: `marketing_secret` |
+| `settings` | Key/value | public: `store`, `social`, `theme`, `home`, `home_sections` (published homepage layout), `marketing`, `delivery`; private: `marketing_secret`, `home_sections_draft` (`{sections, token, saved_at}`) |
 | `staff_roles` | Roles → permissions | `permissions text[]` (`*` = all), `is_system` |
 | `admins` | Staff accounts | `role_key` → `staff_roles` (legacy `role` enum kept for compatibility) |
 | `audit_logs` | Who did what | actor, action, resource, status, redacted metadata |
 | `rate_limits` | Fixed-window counters | service role only |
+| `landing_pages` | Ad landing pages (`/{lang}/lp/{slug}`), migration 0006 | `slug` unique (lowercase-hyphen, ≤ 80), `product_id` → products (set null), `locale`, `status` draft/published, `blocks` jsonb (image/text/form, exactly one form), `form` jsonb (button and field settings), `seo`, `preview_token` (never readable by anon: column grants), `published_at`. Anon reads published rows only; writes need `content.manage`. |
 | `pages` | CMS pages | per-locale title/body (plain text), `seo`, `is_published`, `show_in_footer`, `position` |
 | `form_submissions` | Contact/wholesale | `status` new/read/archived, `ip_hash` (never raw IP) |
 | `subscribers` | Newsletter consent | `status`, `consent_at/source`, `unsubscribe_token` |
