@@ -583,6 +583,7 @@ const MIGRATION_PROBES: [string, string][] = [
   ["0003_security_hardening", "staff_roles"],
   ["0004_commerce_core", "customers"],
   ["0005_content_forms", "pages"],
+  ["0006_landing_pages", "landing_pages"],
 ];
 
 export async function getHealth() {
